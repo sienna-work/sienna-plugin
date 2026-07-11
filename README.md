@@ -6,6 +6,12 @@ The Plugin contains no Sienna product source, credentials, MCP server, or CLI bi
 
 ## Install
 
+Claude Cowork:
+
+1. Open Customize, choose Plugins, then Add marketplace.
+2. Enter `https://github.com/sienna-work/sienna-plugin`.
+3. Install `sienna@sienna`.
+
 Claude Code:
 
 ```sh
