@@ -27,3 +27,10 @@ codex plugin add sienna@sienna
 ```
 
 The source of truth is maintained in the private Sienna monorepo. This repository is generated and published after allowlist, secret, symlink, runtime checksum, package-size, and native Plugin validation.
+
+## Product and support
+
+- Product: https://sienna.work
+- Support: https://github.com/sienna-work/sienna-plugin/issues
+- Privacy: https://auth.sienna.work/privacy
+- License: [MIT](LICENSE)

@@ -21,8 +21,22 @@ find_host_sienna() {
   return 1
 }
 
+find_app_sienna() {
+  local candidate="${SIENNA_APP_BUNDLE_CLI:-/Applications/Sienna.app/Contents/MacOS/sienna}"
+  if [ "$(uname -s)" = "Darwin" ] && [ -x "$candidate" ] && [ ! -d "$candidate" ]; then
+    printf '%s\n' "$candidate"
+    return 0
+  fi
+  return 1
+}
+
 if host_sienna="$(find_host_sienna)"; then
   printf '%s\n' "$host_sienna"
+  exit 0
+fi
+
+if app_sienna="$(find_app_sienna)"; then
+  printf '%s\n' "$app_sienna"
   exit 0
 fi
 
