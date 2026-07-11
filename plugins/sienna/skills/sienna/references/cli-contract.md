@@ -3,8 +3,8 @@
 ## Output
 
 - Typed commands return `{"ok":true,"data":...}` or `{"ok":false,"error":{"kind","message","recovery"}}` with `--json`.
-- `meta get`, `google query`, and a completed natural-language `ask` intentionally return upstream JSON without the Sienna success envelope.
-- `ask --json` returns a typed envelope only when it needs user input; its `data` includes `status`, `question`, `answer_contract`, and the exact `answer_command`.
+- Deprecated direct `meta get`, `google query`, and `adjust report` reads keep returning upstream JSON without the Sienna success envelope during migration.
+- `ask --json` always returns a typed envelope. Completed or partial `data` contains `status`, `answer`, `evidence`, `warnings`, and `timing`; `needs_input` contains `question`, `answer_contract`, and the exact `answer_command`.
 - Exit codes are stable: `0` success, `2` validation, `3` not found, `4` authentication, `5` network, `1` internal.
 - stdout contains results. stderr contains diagnostics and optional update hints.
 - Never echo access tokens, refresh tokens, session tokens, appsecret proofs, poll secrets, or secret-bearing URLs.
@@ -15,11 +15,9 @@ Use `sienna <command> --help` before inventing flags. Start with:
 
 ```sh
 sienna auth status --json
-sienna account list --json
-sienna google accounts --json
 sienna social account list --json
 sienna social post list --json
-sienna ask "최근 7일 메타 광고 성과를 보여줘" --json
+sienna ask "접근 가능한 계정과 최근 7일 Meta·Google 광고 성과를 보여줘" --json
 ```
 
 Use IDs returned by discovery calls. Do not guess ad account, customer,
@@ -32,7 +30,8 @@ are opaque and can change after reconnection or a backend migration.
 - Unknown command or missing flag: verify `sienna --version`; with user approval, run `sienna update` on writable host installations.
 - Network error: retry once only when the operation is read-only, then use `network.md` to identify the blocked domain.
 - Natural-language `needs_input`: ask the user the returned question, then run `sienna answer "<exact answer>" --json` in a new invocation. Do not invent the answer.
-- Natural-language backend failure: use the reported path with direct `sienna meta get`, or construct the direct read-only call from the user's request.
+- Natural-language `partial`: use only returned evidence, identify warnings and retry the missing scope.
+- Natural-language backend failure: retry once with a narrower question, then use a deprecated direct read only for outage diagnosis or existing-script migration.
 - Pagination: pass the provider cursor or page token explicitly. Sienna does not silently fetch every page.
 - Social account auth error: refresh with `sienna social account list`; if
   `needs_reconnect` is true, start `sienna social account connect instagram`.

@@ -8,8 +8,8 @@
     {
       "name": "sienna",
       "source": "./plugins/sienna",
-      "description": "Manage Instagram publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance with the Sienna CLI.",
-      "version": "0.12.1",
+      "description": "Manage Instagram publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance through Sienna's parallel Query Agent.",
+      "version": "0.12.2",
       "author": {
         "name": "Sienna"
       },

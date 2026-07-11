@@ -1,16 +1,23 @@
 # Advertising Workflows
 
-## Meta Ads
+## Ask First
 
-Optional natural-language convenience path:
+Send the complete question once so independent provider reads can run in parallel:
 
 ```sh
-sienna ask "최근 7일 메타 광고 성과를 캠페인별로 보여줘" --json
+sienna ask "최근 7일 Meta와 Google Ads 캠페인 성과를 비교해줘" --json
+sienna ask "지난 30일 ROAS 상위 Meta 광고의 공통 Creative 특징을 알려줘" --json
 # If status is needs_input, ask the returned question and then run:
 sienna answer "<exact user answer>" --json
 ```
 
-This path supports read-only Meta GET only. A successful result uses the same raw JSON/report renderer as the equivalent direct command. It may repair a Meta validation error and retry within a small fixed budget, but it must not silently change the account, date range, or reporting level. Use the direct path below when the endpoint is unavailable or the query is already known.
+Read `data.answer` together with `data.evidence`; do not treat prose without evidence as authoritative. For `partial`, state which provider or scope is missing from `warnings`. Sienna must not silently change the account, date range, reporting level, or filters.
+
+## Deprecated Direct Fallbacks
+
+Use the commands below only when the Query Agent is unavailable, a large raw response is required for diagnosis, or an existing script is being migrated. They remain read-only and keep their stdout contracts, but may print a deprecation warning to stderr.
+
+### Meta Ads
 
 ```sh
 sienna account list --json
@@ -22,7 +29,7 @@ sienna meta get /act_<ID>/insights \
 
 `meta get` is read-only and does not auto-follow `paging`. Never provide `access_token` or `appsecret_proof` as parameters.
 
-## Google Ads
+### Google Ads
 
 ```sh
 sienna google accounts --json
@@ -34,7 +41,7 @@ sienna google query \
 
 Discover the customer ID first. Add `segments.date` for daily rows and `--login-customer-id` for an MCC when required. `cost_micros` is one millionth of the account currency. Pass `nextPageToken` back with `--page-token` for another page.
 
-## Adjust
+### Adjust
 
 ```sh
 sienna adjust report \
@@ -45,9 +52,9 @@ sienna adjust report \
 
 Adjust access is read-only. Use the broker browser flow for normal linking; never ask the user to paste an Adjust token into chat.
 
-## Creative Performance Join
+### Creative Performance Join
 
-Use this workflow for questions such as "What visual traits do our top-ROAS ads share?"
+`sienna ask` owns this join by default. The manual fallback for outage diagnosis is:
 
 1. Query Meta insights at `level=ad` and rank ads using the requested business metric. Preserve `ad_id`.
 2. Fetch analyzed features with `sienna creative show --ad <AD_ID> --json` for representative top and comparison ads.

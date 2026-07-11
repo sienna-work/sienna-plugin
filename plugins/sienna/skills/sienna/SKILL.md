@@ -28,7 +28,7 @@ Use Sienna as the execution layer for advertising data and guarded social publis
    curl -fsSL https://get.sienna.work/install.sh | bash
    ```
 
-Set `SIENNA_BIN` to the resolved path and verify it with `"$SIENNA_BIN" --version`. This Skill requires Sienna 0.13.0 or newer. For an older writable host installation, obtain approval before running `sienna update`. Never download a runtime inside Cowork, and do not install another binary when a working host CLI or bundled Cowork runtime is present.
+Set `SIENNA_BIN` to the resolved path and verify it with `"$SIENNA_BIN" --version`. This Skill requires Sienna 0.14.0 or newer. For an older writable host installation, obtain approval before running `sienna update`. Never download a runtime inside Cowork, and do not install another binary when a working host CLI or bundled Cowork runtime is present.
 
 Supported surfaces are Claude Cowork Desktop, Claude Code, and local Codex CLI, Desktop, or IDE sessions. Do not claim support for ChatGPT web, Codex cloud, or another environment without a persistent local CLI and credential store.
 
@@ -69,9 +69,13 @@ credential, or callback state.
 
 ## Query And Analyze
 
-Discover accessible accounts before querying them. Use [references/workflows.md](references/workflows.md) for Meta, Google, Adjust, and creative-analysis command patterns. For creative-performance questions, join live performance rows to analyzed features by ad ID rather than treating either source alone as the answer.
+Pass the user's complete read-only data question to Sienna in one call, including every provider, date range, comparison, and Creative-performance join it needs:
 
-For a supported read-only Meta request, `"$SIENNA_BIN" ask "<natural-language request>" --json` is an optional convenience. It does not replace agent reasoning or direct commands, and its successful body follows the same contract as `meta get`.
+```sh
+"$SIENNA_BIN" ask "<complete natural-language data question>" --json
+```
+
+`ask` is the default read interface for Meta, Google Ads, Adjust, and analyzed Creative data. It plans independent reads in parallel and returns a typed envelope whose `data.status` is `completed`, `partial`, or `needs_input`. Use [references/workflows.md](references/workflows.md) for examples and evidence interpretation.
 
 When it returns `status: needs_input`:
 
@@ -79,7 +83,7 @@ When it returns `status: needs_input`:
 2. After the user answers, run `"$SIENNA_BIN" answer "<exact answer>" --json` as a new CLI invocation.
 3. Repeat only if another `needs_input` is returned. The one pending request is profile-scoped and expires after 24 hours.
 
-Use direct `meta get` when the natural-language backend is unavailable or the path is already known. Do not route Google, Adjust, Creative, or mutation requests through `ask`.
+For `partial`, answer only from returned evidence, identify the missing provider or scope from `warnings`, and offer its recovery. Direct `account list`, `meta get`, Google reads, `adjust report`, and Creative reads are deprecated fallbacks for backend outages, large raw diagnostics, and existing-script migration. They may emit a stderr warning without changing stdout. Mutation requests remain unsupported by `ask` and follow the guarded workflow below.
 
 ## Guard Mutations
 
