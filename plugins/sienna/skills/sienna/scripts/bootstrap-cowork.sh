@@ -1,12 +1,31 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if command -v sienna >/dev/null 2>&1; then
-  command -v sienna
+plugin_root="${CLAUDE_PLUGIN_ROOT:-}"
+
+find_host_sienna() {
+  local plugin_bin=""
+  local directory candidate
+  if [ -n "$plugin_root" ]; then
+    plugin_bin="${plugin_root}/bin"
+  fi
+  while IFS= read -r directory; do
+    [ -n "$directory" ] || directory="."
+    [ "$directory" = "$plugin_bin" ] && continue
+    candidate="${directory}/sienna"
+    if [ -x "$candidate" ] && [ ! -d "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done < <(printf '%s' "${PATH:-}" | tr ':' '\n')
+  return 1
+}
+
+if host_sienna="$(find_host_sienna)"; then
+  printf '%s\n' "$host_sienna"
   exit 0
 fi
 
-plugin_root="${CLAUDE_PLUGIN_ROOT:-}"
 if [ -z "$plugin_root" ]; then
   echo "sienna is not on PATH; obtain approval before running the official checksum-verifying installer" >&2
   exit 127
@@ -43,6 +62,7 @@ if [ -z "$checksum_line" ]; then
   exit 1
 fi
 expected_checksum="${checksum_line%% *}"
+runtime="${runtime_root}/${asset}"
 
 verify_checksum() {
   local file="$1"
@@ -59,41 +79,19 @@ verify_checksum() {
   [ "$actual" = "$expected" ]
 }
 
-if [ -n "${CLAUDE_PLUGIN_DATA:-}" ]; then
-  data_root="$CLAUDE_PLUGIN_DATA"
-else
-  data_root="${XDG_DATA_HOME:-$HOME/.local/share}/sienna-plugin"
-fi
-bin_dir="${data_root}/bin"
-destination="${bin_dir}/sienna"
-mkdir -p "$bin_dir"
-chmod 0700 "$data_root" "$bin_dir"
-
-if [ ! -f "$destination" ] || ! verify_checksum "$destination" "$expected_checksum"; then
-  if ! command -v curl >/dev/null 2>&1; then
-    echo "curl is required to install the Sienna Cowork runtime" >&2
-    exit 1
-  fi
-  temporary="$(mktemp "${destination}.tmp.XXXXXX")"
-  trap 'rm -f "${temporary:-}"' EXIT
-  base_url="${SIENNA_DIST_URL:-https://get.sienna.work}"
-  base_url="${base_url%/}"
-  if ! curl -fsSL "${base_url}/v${version}/${asset}" -o "$temporary"; then
-    echo "could not download the Sienna Cowork runtime; allow egress to get.sienna.work and retry" >&2
-    exit 1
-  fi
-  if ! verify_checksum "$temporary" "$expected_checksum"; then
-    echo "the downloaded Sienna Cowork runtime checksum does not match the public Plugin metadata" >&2
-    exit 1
-  fi
-  chmod 0700 "$temporary"
-  mv -f "$temporary" "$destination"
-  trap - EXIT
-fi
-
-if ! "$destination" --version >/dev/null 2>&1; then
-  echo "the installed Sienna Cowork runtime failed its version check" >&2
+if [ ! -x "$runtime" ]; then
+  echo "the installed Sienna Plugin is missing its bundled ${asset} runtime; update or reinstall the Plugin" >&2
   exit 1
 fi
 
-printf '%s\n' "$destination"
+if ! verify_checksum "$runtime" "$expected_checksum"; then
+  echo "the bundled Sienna Cowork runtime checksum does not match the Plugin metadata" >&2
+  exit 1
+fi
+
+if ! "$runtime" --version >/dev/null 2>&1; then
+  echo "the bundled Sienna Cowork runtime failed its version check" >&2
+  exit 1
+fi
+
+printf '%s\n' "$runtime"

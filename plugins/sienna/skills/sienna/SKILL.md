@@ -9,8 +9,7 @@ Use Sienna as the execution layer for advertising data. Reason about the task in
 
 ## Resolve The CLI
 
-1. Reuse `sienna` from `PATH` when present.
-2. Otherwise, when `CLAUDE_PLUGIN_ROOT` is set, run:
+1. When `CLAUDE_PLUGIN_ROOT` is set, run:
 
    ```sh
    SIENNA_BIN="$(bash "${CLAUDE_PLUGIN_ROOT}/skills/sienna/scripts/bootstrap-cowork.sh")"
@@ -19,15 +18,17 @@ Use Sienna as the execution layer for advertising data. Reason about the task in
    fi
    ```
 
-   The Cowork bootstrap downloads only the architecture-specific CLI declared by the public Plugin runtime metadata, verifies its release checksum, and installs it under persistent Plugin data. If `get.sienna.work` egress is blocked, ask the user or administrator to allow that exact domain before retrying.
+   The resolver first reuses a host `sienna` executable outside the Plugin `bin/` directory. In Cowork, where no host CLI exists, it selects the architecture-specific Linux CLI bundled in the Plugin and verifies it against the bundled release checksum. It must not download a Cowork runtime.
 
-3. Otherwise explain that the official checksum-verifying installer will download a host executable, and obtain explicit user approval before running:
+2. Otherwise, reuse `sienna` from `PATH` when present.
+
+3. If neither the Plugin nor a host CLI is available, explain that the official checksum-verifying installer will download a host executable, and obtain explicit user approval before running:
 
    ```sh
    curl -fsSL https://get.sienna.work/install.sh | bash
    ```
 
-Set `SIENNA_BIN` to the resolved path and verify it with `"$SIENNA_BIN" --version`. This Skill requires Sienna 0.11.0 or newer. For an older writable host installation, obtain approval before running `sienna update`. Do not install or download another binary when a working host CLI is already present.
+Set `SIENNA_BIN` to the resolved path and verify it with `"$SIENNA_BIN" --version`. This Skill requires Sienna 0.11.2 or newer. For an older writable host installation, obtain approval before running `sienna update`. Never download a runtime inside Cowork, and do not install another binary when a working host CLI or bundled Cowork runtime is present.
 
 Supported surfaces are Claude Cowork Desktop, Claude Code, and local Codex CLI, Desktop, or IDE sessions. Do not claim support for ChatGPT web, Codex cloud, or another environment without a persistent local CLI and credential store.
 
@@ -57,15 +58,15 @@ Supported surfaces are Claude Cowork Desktop, Claude Code, and local Codex CLI, 
 
 Discover accessible accounts before querying them. Use [references/workflows.md](references/workflows.md) for Meta, Google, Adjust, and creative-analysis command patterns. For creative-performance questions, join live performance rows to analyzed features by ad ID rather than treating either source alone as the answer.
 
-For a supported read-only Meta request, `"$SIENNA_BIN" request "<natural-language request>" --json` is an optional convenience. It does not replace agent reasoning or direct commands, and its successful body follows the same contract as `meta get`.
+For a supported read-only Meta request, `"$SIENNA_BIN" ask "<natural-language request>" --json` is an optional convenience. It does not replace agent reasoning or direct commands, and its successful body follows the same contract as `meta get`.
 
 When it returns `status: needs_input`:
 
 1. Present `question` and `answer_contract` to the user. Do not answer on the user's behalf.
-2. After the user answers, run `"$SIENNA_BIN" continue-request "<exact answer>" --json` as a new CLI invocation.
+2. After the user answers, run `"$SIENNA_BIN" answer "<exact answer>" --json` as a new CLI invocation.
 3. Repeat only if another `needs_input` is returned. The one pending request is profile-scoped and expires after 24 hours.
 
-Use direct `meta get` when the natural-language backend is unavailable or the path is already known. Do not route Google, Adjust, Creative, or mutation requests through `request`.
+Use direct `meta get` when the natural-language backend is unavailable or the path is already known. Do not route Google, Adjust, Creative, or mutation requests through `ask`.
 
 ## Guard Mutations
 

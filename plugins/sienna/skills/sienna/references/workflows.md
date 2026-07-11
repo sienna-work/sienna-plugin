@@ -5,9 +5,9 @@
 Optional natural-language convenience path:
 
 ```sh
-sienna request "최근 7일 메타 광고 성과를 캠페인별로 보여줘" --json
+sienna ask "최근 7일 메타 광고 성과를 캠페인별로 보여줘" --json
 # If status is needs_input, ask the returned question and then run:
-sienna continue-request "<exact user answer>" --json
+sienna answer "<exact user answer>" --json
 ```
 
 This path supports read-only Meta GET only. A successful result uses the same raw JSON/report renderer as the equivalent direct command. It may repair a Meta validation error and retry within a small fixed budget, but it must not silently change the account, date range, or reporting level. Use the direct path below when the endpoint is unavailable or the query is already known.
