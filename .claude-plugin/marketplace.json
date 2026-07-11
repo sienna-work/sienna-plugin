@@ -1,0 +1,27 @@
+{
+  "name": "sienna",
+  "description": "Sienna agent plugins for advertising analysis.",
+  "owner": {
+    "name": "Sienna"
+  },
+  "plugins": [
+    {
+      "name": "sienna",
+      "source": "./plugins/sienna",
+      "description": "Analyze Meta Ads, Google Ads, Adjust reports, and creative performance through direct or natural-language Sienna CLI queries.",
+      "version": "0.11.1",
+      "author": {
+        "name": "Sienna"
+      },
+      "homepage": "https://sienna.work",
+      "repository": "https://github.com/sienna-work/sienna-plugin",
+      "license": "MIT",
+      "category": "productivity",
+      "tags": [
+        "advertising",
+        "analytics"
+      ],
+      "strict": true
+    }
+  ]
+}

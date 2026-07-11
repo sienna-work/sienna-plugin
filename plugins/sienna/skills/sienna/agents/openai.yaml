@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sienna Ads"
+  short_description: "Meta, Google Ads 및 크리에이티브 분석"
+  default_prompt: "Use $sienna to analyze recent ad performance and explain the strongest creative patterns."

@@ -1,0 +1,20 @@
+{
+  "name": "sienna",
+  "interface": {
+    "displayName": "Sienna"
+  },
+  "plugins": [
+    {
+      "name": "sienna",
+      "source": {
+        "source": "local",
+        "path": "./plugins/sienna"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
