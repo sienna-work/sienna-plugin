@@ -1,7 +1,7 @@
 {
   "name": "sienna",
-  "version": "0.11.8",
-  "description": "Analyze Meta Ads, Google Ads, Adjust reports, and creative performance through direct or natural-language Sienna CLI queries.",
+  "version": "0.12.1",
+  "description": "Manage Instagram publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance with the Sienna CLI.",
   "author": {
     "name": "Sienna"
   },
@@ -9,16 +9,16 @@
   "repository": "https://github.com/sienna-work/sienna-plugin",
   "license": "MIT",
   "keywords": [
+    "social-media",
+    "instagram",
     "advertising",
-    "analytics",
-    "meta-ads",
-    "google-ads"
+    "analytics"
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Sienna Ads",
-    "shortDescription": "Analyze advertising performance with Sienna.",
-    "longDescription": "Analyze Meta Ads, Google Ads, Adjust reports, and creative performance through direct or natural-language Sienna CLI queries.",
+    "displayName": "Sienna",
+    "shortDescription": "Manage social publishing and advertising analytics with Sienna.",
+    "longDescription": "Manage Instagram publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance with the Sienna CLI.",
     "developerName": "Sienna",
     "category": "Productivity",
     "capabilities": [
@@ -28,6 +28,7 @@
     ],
     "websiteURL": "https://sienna.work",
     "defaultPrompt": [
+      "Connect Instagram and safely prepare a social post.",
       "Analyze recent ad performance and explain the strongest creative patterns.",
       "Compare Meta and Google campaign performance for the last seven days."
     ]

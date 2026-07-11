@@ -17,10 +17,14 @@ Use `sienna <command> --help` before inventing flags. Start with:
 sienna auth status --json
 sienna account list --json
 sienna google accounts --json
+sienna social account list --json
+sienna social post list --json
 sienna ask "최근 7일 메타 광고 성과를 보여줘" --json
 ```
 
-Use IDs returned by discovery calls. Do not guess ad account, customer, campaign, ad set, ad, or creative IDs.
+Use IDs returned by discovery calls. Do not guess ad account, customer,
+campaign, ad set, ad, creative, social account, or social post IDs. Social IDs
+are opaque and can change after reconnection or a backend migration.
 
 ## Recovery
 
@@ -30,9 +34,16 @@ Use IDs returned by discovery calls. Do not guess ad account, customer, campaign
 - Natural-language `needs_input`: ask the user the returned question, then run `sienna answer "<exact answer>" --json` in a new invocation. Do not invent the answer.
 - Natural-language backend failure: use the reported path with direct `sienna meta get`, or construct the direct read-only call from the user's request.
 - Pagination: pass the provider cursor or page token explicitly. Sienna does not silently fetch every page.
+- Social account auth error: refresh with `sienna social account list`; if
+  `needs_reconnect` is true, start `sienna social account connect instagram`.
+- Social post status: poll with `sienna social post get <POST_ID>` or `social
+  post list`; scheduled processing continues after the CLI exits.
 
 ## Safety
 
 - Do not pass `access_token` or `appsecret_proof` through Meta `--param` values.
 - Do not put credentials in argv, environment variables, files, prompts, or reports. Existing environment overrides are only for user-controlled CI.
 - Use `--dry-run` and explicit confirmation for mutations.
+- Never print or persist provider keys, backend Profile IDs, callback state,
+  presigned upload URLs, or query signatures. A displayed Sienna verification
+  URL is only for the user currently completing that short-lived flow.

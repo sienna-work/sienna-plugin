@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "sienna",
-  "version": "0.11.8",
-  "description": "Analyze Meta Ads, Google Ads, Adjust reports, and creative performance through direct or natural-language Sienna CLI queries.",
+  "version": "0.12.1",
+  "description": "Manage Instagram publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance with the Sienna CLI.",
   "author": {
     "name": "Sienna"
   },
@@ -10,10 +10,10 @@
   "repository": "https://github.com/sienna-work/sienna-plugin",
   "license": "MIT",
   "keywords": [
+    "social-media",
+    "instagram",
     "advertising",
-    "analytics",
-    "meta-ads",
-    "google-ads"
+    "analytics"
   ],
   "skills": "./skills/"
 }

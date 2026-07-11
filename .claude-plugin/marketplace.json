@@ -1,6 +1,6 @@
 {
   "name": "sienna",
-  "description": "Sienna agent plugins for advertising analysis.",
+  "description": "Sienna agent plugins for social publishing and advertising analysis.",
   "owner": {
     "name": "Sienna"
   },
@@ -8,8 +8,8 @@
     {
       "name": "sienna",
       "source": "./plugins/sienna",
-      "description": "Analyze Meta Ads, Google Ads, Adjust reports, and creative performance through direct or natural-language Sienna CLI queries.",
-      "version": "0.11.8",
+      "description": "Manage Instagram publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance with the Sienna CLI.",
+      "version": "0.12.1",
       "author": {
         "name": "Sienna"
       },
@@ -18,6 +18,8 @@
       "license": "MIT",
       "category": "productivity",
       "tags": [
+        "social-media",
+        "instagram",
         "advertising",
         "analytics"
       ],

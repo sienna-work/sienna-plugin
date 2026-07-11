@@ -64,6 +64,53 @@ sienna creative search "bright product demo, early CTA" --limit 5 --json
 
 A 404 may mean the creative is not analyzed yet or is outside the authenticated account. Use `creative list` to inspect `done`, `pending`, `failed`, or `excluded` state.
 
+## Instagram Social Publishing
+
+Connect and discover the current opaque account ID:
+
+```sh
+sienna social account connect instagram --no-browser --persist --json
+sienna social account connect instagram --resume --json
+sienna social account list --json
+sienna social account status <SOCIAL_ACCOUNT_ID> --json
+```
+
+Run dry-run first and present the normalized target, mode, schedule, content
+summary, and media metadata for confirmation:
+
+```sh
+sienna social post create --account <SOCIAL_ACCOUNT_ID> \
+  --content "출시 소식" --media ./launch.jpg --draft --dry-run --json
+
+sienna social post create --account <SOCIAL_ACCOUNT_ID> \
+  --content "오늘 공개합니다" --publish-now --dry-run --json
+
+sienna social post create --account <SOCIAL_ACCOUNT_ID> \
+  --content "예약 게시" --media ./scheduled.jpg \
+  --scheduled-for 2026-07-15T09:00:00+09:00 \
+  --timezone Asia/Seoul --dry-run --json
+```
+
+Repeat `--account` for multiple owned Instagram targets. Local media scheduling
+is limited to six days because the temporary upload expires; text-only posts or
+long-lived public `--media-url` values can use the normal provider range. Never
+show a presigned URL or its query signature.
+
+After explicit confirmation, remove `--dry-run`. Poll current state and guard
+follow-up mutations the same way:
+
+```sh
+sienna social post list --json
+sienna social post get <POST_ID> --json
+sienna social post cancel <POST_ID> --dry-run --json
+sienna social post retry <POST_ID> --dry-run --json
+sienna social account disconnect <SOCIAL_ACCOUNT_ID> --dry-run --json
+```
+
+If an account needs reconnection, start the Instagram connect flow and then
+rediscover all opaque IDs. A future direct-platform backend may also require a
+reconnect and may replace account/post IDs.
+
 ## Mutations
 
 When a write command exists, run its `--dry-run` form first. Present the account, object IDs, and changes, then wait for explicit confirmation before the final command.
