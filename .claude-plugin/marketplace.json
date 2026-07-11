@@ -9,7 +9,7 @@
       "name": "sienna",
       "source": "./plugins/sienna",
       "description": "Analyze Meta Ads, Google Ads, Adjust reports, and creative performance through direct or natural-language Sienna CLI queries.",
-      "version": "0.11.7",
+      "version": "0.11.8",
       "author": {
         "name": "Sienna"
       },
