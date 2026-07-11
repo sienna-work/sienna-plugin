@@ -17,7 +17,7 @@ find_host_sienna() {
       printf '%s\n' "$candidate"
       return 0
     fi
-  done < <(printf '%s' "${PATH:-}" | tr ':' '\n')
+  done < <(printf '%s\n' "${PATH:-}" | tr ':' '\n')
   return 1
 }
 

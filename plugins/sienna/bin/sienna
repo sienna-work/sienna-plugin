@@ -3,6 +3,6 @@ set -euo pipefail
 
 bin_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 plugin_root="$(dirname -- "$bin_dir")"
-export CLAUDE_PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$plugin_root}"
+export CLAUDE_PLUGIN_ROOT="$plugin_root"
 resolved="$(bash "$plugin_root/skills/sienna/scripts/bootstrap-cowork.sh")"
 exec "$resolved" "$@"

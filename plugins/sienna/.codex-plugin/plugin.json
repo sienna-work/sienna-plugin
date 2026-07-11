@@ -1,6 +1,6 @@
 {
   "name": "sienna",
-  "version": "0.11.4",
+  "version": "0.11.5",
   "description": "Analyze Meta Ads, Google Ads, Adjust reports, and creative performance through direct or natural-language Sienna CLI queries.",
   "author": {
     "name": "Sienna"
