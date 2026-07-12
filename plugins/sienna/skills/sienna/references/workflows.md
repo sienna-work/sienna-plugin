@@ -13,9 +13,9 @@ sienna answer <request_id> "<exact user answer>" --json
 
 Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. For `partial`, state which provider or scope is missing from `warnings`. If evidence is `complete:false`, either narrow and re-ask or run the returned exact `continue_command`. Sienna must not silently change the account, date range, reporting level, or filters.
 
-## Deprecated Direct Fallbacks
+## Structured Relay Commands
 
-Use the commands below only when the Query Agent is unavailable, a large raw response is required for diagnosis, or an existing script is being migrated. They remain read-only and keep their stdout contracts, but may print a deprecation warning to stderr.
+When AgentCore is unavailable, use the commands below. They bypass AgentCore but still use the same authenticated Query API relay and server-side credentials. Query API or broker outages have no local provider fallback.
 
 ### Meta Ads
 
