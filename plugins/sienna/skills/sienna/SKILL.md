@@ -1,6 +1,6 @@
 ---
 name: sienna
-description: Manage Meta Ads, Google Ads, Adjust reports, analyzed ad creatives, and Instagram social publishing with the Sienna CLI. Use for ad performance, account discovery, GAQL, Meta insights, creative-pattern analysis, social account connection, guarded publishing, or provider authentication in Claude Cowork, Claude Code, or local Codex.
+description: Manage Meta Ads, Google Ads, Adjust reports, analyzed ad creatives, and Instagram social publishing with the Sienna CLI. Use for ad performance, account discovery, GAQL, Meta insights, creative-pattern analysis, social account connection, guarded publishing, social post and follower metrics, or provider authentication in Claude Cowork, Claude Code, or local Codex.
 ---
 
 # Sienna
@@ -28,7 +28,7 @@ Use Sienna as the execution layer for advertising data and guarded social publis
    curl -fsSL https://get.sienna.work/install.sh | bash
    ```
 
-Set `SIENNA_BIN` to the resolved path and verify it with `"$SIENNA_BIN" --version`. This Skill requires Sienna 0.14.0 or newer. For an older writable host installation, obtain approval before running `sienna update`. Never download a runtime inside Cowork, and do not install another binary when a working host CLI or bundled Cowork runtime is present.
+Set `SIENNA_BIN` to the resolved path and verify it with `"$SIENNA_BIN" --version`. This Skill requires Sienna 0.14.1 or newer. For an older writable host installation, obtain approval before running `sienna update`. Never download a runtime inside Cowork, and do not install another binary when a working host CLI or bundled Cowork runtime is present.
 
 Supported surfaces are Claude Cowork Desktop, Claude Code, and local Codex CLI, Desktop, or IDE sessions. Do not claim support for ChatGPT web, Codex cloud, or another environment without a persistent local CLI and credential store.
 
@@ -75,15 +75,15 @@ Pass the user's complete read-only data question to Sienna in one call, includin
 "$SIENNA_BIN" ask "<complete natural-language data question>" --json
 ```
 
-`ask` is the default read interface for Meta, Google Ads, Adjust, and analyzed Creative data. It plans independent reads in parallel and returns a typed envelope whose `data.status` is `completed`, `partial`, or `needs_input`. Use [references/workflows.md](references/workflows.md) for examples and evidence interpretation.
+`ask` is the default read interface for Meta, Google Ads, Adjust, and analyzed Creative data. It plans independent reads in parallel and returns unsynthesized raw evidence in a typed envelope whose `data.status` is `completed`, `partial`, or `needs_input`. Interpret `data.evidence` yourself; no `answer` field is produced. Use [references/workflows.md](references/workflows.md) for examples and evidence interpretation.
 
 When it returns `status: needs_input`:
 
 1. Present `question` and `answer_contract` to the user. Do not answer on the user's behalf.
-2. After the user answers, run `"$SIENNA_BIN" answer "<exact answer>" --json` as a new CLI invocation.
-3. Repeat only if another `needs_input` is returned. The one pending request is profile-scoped and expires after 24 hours.
+2. After the user answers, run the returned exact `answer_command`, which includes the server request id, as a new CLI invocation with `--json`.
+3. Repeat only if another `needs_input` is returned. State is user-scoped, server-managed, and expires; no local pending file is required.
 
-For `partial`, answer only from returned evidence, identify the missing provider or scope from `warnings`, and offer its recovery. Direct `account list`, `meta get`, Google reads, `adjust report`, and Creative reads are deprecated fallbacks for backend outages, large raw diagnostics, and existing-script migration. They may emit a stderr warning without changing stdout. Mutation requests remain unsupported by `ask` and follow the guarded workflow below.
+For `partial`, answer only from returned evidence and identify the missing provider or scope from `warnings`. When any evidence has `complete:false`, either narrow and re-ask or run the returned exact `continue_command`; continuation skips the planner and resumes the saved provider cursor. Direct `account list`, `meta get`, Google reads, `adjust report`, and Creative reads are deprecated fallbacks for backend outages, large raw diagnostics, and existing-script migration. They may emit a stderr warning without changing stdout. Mutation requests remain unsupported by `ask` and follow the guarded workflow below.
 
 ## Guard Mutations
 
@@ -102,6 +102,12 @@ disconnect before confirmation. A local-media schedule must be within six days;
 use text-only content or a long-lived public media URL for later dates. Read
 [references/workflows.md](references/workflows.md) for exact commands and
 recovery.
+
+Organic performance questions use the read-only metrics commands — `social
+post metrics` (single post or a sorted, date-filtered list; external posts
+included with `source: external`) and `social account metrics` (followers and
+growth). Metrics are cumulative snapshots, need no confirmation, and require
+the provider analytics add-on.
 
 ## Recover From Network Policy
 

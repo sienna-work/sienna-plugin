@@ -7,11 +7,11 @@ Send the complete question once so independent provider reads can run in paralle
 ```sh
 sienna ask "최근 7일 Meta와 Google Ads 캠페인 성과를 비교해줘" --json
 sienna ask "지난 30일 ROAS 상위 Meta 광고의 공통 Creative 특징을 알려줘" --json
-# If status is needs_input, ask the returned question and then run:
-sienna answer "<exact user answer>" --json
+# If status is needs_input, ask the returned question and run answer_command, e.g.:
+sienna answer <request_id> "<exact user answer>" --json
 ```
 
-Read `data.answer` together with `data.evidence`; do not treat prose without evidence as authoritative. For `partial`, state which provider or scope is missing from `warnings`. Sienna must not silently change the account, date range, reporting level, or filters.
+Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. For `partial`, state which provider or scope is missing from `warnings`. If evidence is `complete:false`, either narrow and re-ask or run the returned exact `continue_command`. Sienna must not silently change the account, date range, reporting level, or filters.
 
 ## Deprecated Direct Fallbacks
 
@@ -117,6 +117,32 @@ sienna social account disconnect <SOCIAL_ACCOUNT_ID> --dry-run --json
 If an account needs reconnection, start the Instagram connect flow and then
 rediscover all opaque IDs. A future direct-platform backend may also require a
 reconnect and may replace account/post IDs.
+
+## Instagram Social Metrics
+
+Read-only performance metrics for connected accounts and their posts. No
+`--dry-run` exists because nothing mutates and nothing is stored:
+
+```sh
+sienna social post metrics --sort engagement --order desc --limit 10 --json
+sienna social post metrics --account <SOCIAL_ACCOUNT_ID> \
+  --from 2026-06-01 --to 2026-07-01 --json
+sienna social post metrics <POST_ID> --json
+sienna social account metrics <SOCIAL_ACCOUNT_ID> --json
+```
+
+Metrics are cumulative provider snapshots with a per-post `last_updated` time;
+there is no per-day series, so compare posts against each other or re-poll for
+fresh totals. The list range is limited to 366 days and pages of 1–100 items.
+
+Posts published outside Sienna are included with `"source": "external"`
+(filter with `--source sienna|external|all`). External posts are metrics-only:
+`post get`, `cancel`, and `retry` reject them with a `not_found` error whose
+recovery hint explains the read-only contract — do not retry those calls.
+
+If metrics fail with a `validation` error mentioning the analytics add-on, the
+provider plan does not include analytics. Report it to the operator; account
+management and publishing keep working.
 
 ## Mutations
 
