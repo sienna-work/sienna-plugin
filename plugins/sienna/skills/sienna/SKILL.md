@@ -75,7 +75,7 @@ Pass the user's complete read-only data question to Sienna in one call, includin
 "$SIENNA_BIN" ask "<complete natural-language data question>" --json
 ```
 
-`ask` is the default read interface for Meta, Google Ads, Adjust, and analyzed Creative data. It plans independent reads in parallel and returns unsynthesized raw evidence in a typed envelope whose `data.status` is `completed`, `partial`, or `needs_input`. Interpret `data.evidence` yourself; no `answer` field is produced. Use [references/workflows.md](references/workflows.md) for examples and evidence interpretation.
+`ask` is the default read interface for Meta, Google Ads, Adjust, and analyzed Creative data. It may run for several minutes and waits for terminal evidence by default, which is the correct behavior for an upstream agent that must process the result. Do not add `--detach` merely to avoid waiting. If the process is interrupted, resume the durable server job with the exact `sienna wait <request_id> --json` command printed on stderr. Use `--detach` only when the user explicitly wants background execution and accepts a non-terminal success response. It plans independent reads in parallel and returns unsynthesized raw evidence in a typed envelope whose `data.status` is `completed`, `partial`, or `needs_input`. Interpret `data.evidence` yourself; no `answer` field is produced. Use [references/workflows.md](references/workflows.md) for examples and evidence interpretation.
 
 When it returns `status: needs_input`:
 
@@ -84,6 +84,8 @@ When it returns `status: needs_input`:
 3. Repeat only if another `needs_input` is returned. State is user-scoped, server-managed, and expires; no local pending file is required.
 
 For `partial`, answer only from returned evidence and identify the missing provider or scope from `warnings`. When any evidence has `complete:false`, either narrow and re-ask or run the returned exact `continue_command`; continuation skips the planner and resumes the saved provider cursor. Direct `account list`, `meta get`, Google reads, `adjust report`, and Creative reads are deprecated fallbacks for backend outages, large raw diagnostics, and existing-script migration. They may emit a stderr warning without changing stdout. Mutation requests remain unsupported by `ask` and follow the guarded workflow below.
+
+Ctrl-C, a broken client connection, or a polling network error does not cancel a query job. Use `sienna cancel <request_id> --dry-run --json` to inspect the target and only run the command without `--dry-run` after explicit cancellation is intended. Cancellation is cooperative, so an already-running provider read may finish while no new reads are started.
 
 ## Guard Mutations
 

@@ -9,9 +9,11 @@ sienna ask "최근 7일 Meta와 Google Ads 캠페인 성과를 비교해줘" --j
 sienna ask "지난 30일 ROAS 상위 Meta 광고의 공통 Creative 특징을 알려줘" --json
 # If status is needs_input, ask the returned question and run answer_command, e.g.:
 sienna answer <request_id> "<exact user answer>" --json
+# If the CLI was interrupted, resume the same server job without starting over:
+sienna wait <request_id> --json
 ```
 
-Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. For `partial`, state which provider or scope is missing from `warnings`. If evidence is `complete:false`, either narrow and re-ask or run the returned exact `continue_command`. Sienna must not silently change the account, date range, reporting level, or filters.
+Let `ask`, `answer`, and `continue` wait for terminal evidence even when they take several minutes. Use `--detach` only for an explicitly requested background handoff. Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. For `partial`, state which provider or scope is missing from `warnings`. If evidence is `complete:false`, either narrow and re-ask or run the returned exact `continue_command`. Sienna must not silently change the account, date range, reporting level, or filters.
 
 ## Structured Relay Commands
 
