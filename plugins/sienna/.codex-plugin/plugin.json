@@ -1,6 +1,6 @@
 {
   "name": "sienna",
-  "version": "0.12.3",
+  "version": "0.12.4",
   "description": "Manage Instagram publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance through Sienna's parallel Query Agent.",
   "author": {
     "name": "Sienna"
@@ -14,7 +14,7 @@
     "advertising",
     "analytics"
   ],
-  "skills": "./skills/",
+  "skills": "./codex-skills/",
   "interface": {
     "displayName": "Sienna",
     "shortDescription": "Manage social publishing and advertising analytics with Sienna.",
