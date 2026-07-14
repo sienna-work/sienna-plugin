@@ -13,7 +13,7 @@ sienna answer <request_id> "<exact user answer>" --json
 sienna wait <request_id> --json
 ```
 
-Let `ask`, `answer`, and `continue` wait for terminal evidence even when they take several minutes. Use `--detach` only for an explicitly requested background handoff. Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. For `partial`, state which provider or scope is missing from `warnings`. If evidence is `complete:false`, either narrow and re-ask or run the returned exact `continue_command`. Sienna must not silently change the account, date range, reporting level, or filters.
+Let `ask`, `answer`, and `continue` wait for terminal evidence even when they take several minutes. Use `--detach` only for an explicitly requested background handoff. Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. Use `data.gaps` for missing optional or failed provider coverage; `warnings` stay for assumptions and date-range caveats only. When `continue_command` is present, run it exactly for pagination. When `status=completed` with non-empty `gaps`, analyze the returned evidence first and follow each gap recovery only if that coverage is still required. When `status=partial` without `continue_command`, start a new `sienna ask` after resolving required gaps — do not use `sienna answer` for free-form follow-ups.
 
 ## Structured Relay Commands
 
