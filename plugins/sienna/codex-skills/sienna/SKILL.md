@@ -75,6 +75,23 @@ secret-free and separate from the 24-hour conversation trace; it excludes
 prompts, confirmation Q&A, planner messages, and final natural-language
 answers. Hosted MCP intentionally exposes no history retrieval tool.
 
+## Inspect Ask history
+
+Use the CLI-only Ask history surface for terminal Ask meta (prompt, status,
+timing, gaps/warnings summary). Evidence bodies stay in provider query history
+and link by `request_id` / `root_request_id`:
+
+```sh
+"$SIENNA_BIN" history ask list --json
+"$SIENNA_BIN" history ask show <REQUEST_ID> --json
+```
+
+Ask history is written only for terminal statuses
+(`completed`/`partial`/`failed`/`cancelled`), not for `needs_input`. It uses the
+same 30-day default retention family as provider history but a separate quota
+counter. It does not replace conversation-trace. Hosted MCP has no Ask history
+tool.
+
 ## Guard changes
 
 Before a command that creates, modifies, publishes, pauses, resumes, cancels, disconnects, or deletes anything:

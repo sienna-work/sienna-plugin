@@ -9,6 +9,7 @@
 - stdout contains results. stderr contains diagnostics and optional update hints.
 - Never echo access tokens, refresh tokens, session tokens, appsecret proofs, poll secrets, or secret-bearing URLs.
 - `history list --json` returns one typed Sienna envelope containing body-free summaries, retention/quota metadata, and an opaque `next_cursor`. `history show <HISTORY_ID> --json` is the only history command that returns the full canonical request and redacted provider result.
+- `history ask list --json` returns Ask terminal summaries (prompt preview only). `history ask show <REQUEST_ID> --json` returns Ask meta plus linked provider query history summaries.
 
 ## Provider History
 
@@ -25,6 +26,18 @@ configured maximum is 90 days, but tenant record/byte quotas can evict completed
 rows earlier. Provider history is secret-free and is not the 24-hour
 conversation trace: it contains no prompt, confirmation Q&A, planner message,
 or final natural-language answer. Hosted MCP exposes no history retrieval tool.
+
+## Ask History
+
+```sh
+sienna history ask list --status completed --limit 20 --json
+sienna history ask show <REQUEST_ID> --json
+```
+
+Ask history stores terminal Ask meta only. Child provider calls are linked by
+`request_id`/`root_request_id` at read time. Lists omit full prompts and child
+bodies. Retention defaults match provider history but use a separate quota.
+Hosted MCP exposes no Ask history tool.
 
 ## Discovery
 
