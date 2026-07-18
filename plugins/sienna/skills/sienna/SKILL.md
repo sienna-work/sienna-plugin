@@ -32,6 +32,8 @@ Set `SIENNA_BIN` to the resolved path and verify it with `"$SIENNA_BIN" --versio
 
 Supported surfaces are Claude Cowork Desktop, Claude Code, and local Codex CLI, Desktop, or IDE sessions. Do not claim support for ChatGPT web, Codex cloud, or another environment without a persistent local CLI and credential store.
 
+This file governs the local Plugin surface. Sienna also has a separate read-only Hosted MCP contract for approved hosted AI connections; read [references/hosted-mcp.md](references/hosted-mcp.md) before explaining how hosted and local sessions differ. Do not route local CLI work through the remote service, do not claim that Hosted MCP serves this Skill over HTTP, and do not expose a ChatGPT general-user install action before its public Plugin is approved.
+
 ## Follow The CLI Contract
 
 - Prefer `--json`. Typed commands use `{"ok":true,"data":...}` and structured error envelopes. `meta get` and `google query` return upstream JSON directly.
@@ -69,13 +71,15 @@ credential, or callback state.
 
 ## Query And Analyze
 
-Pass the user's complete read-only data question to Sienna in one call, including every provider, date range, comparison, and Creative-performance join it needs:
+For structured direct reads, discover accessible accounts before querying them. Use [references/workflows.md](references/workflows.md) for Meta, Google, Adjust, and creative-analysis command patterns. For creative-performance questions, join live performance rows to analyzed features by ad ID rather than treating either source alone as the answer.
+
+For a multi-provider or open-ended read-only question, prefer:
 
 ```sh
 "$SIENNA_BIN" ask "<complete natural-language data question>" --json
 ```
 
-`ask` is the default read interface for Meta, Google Ads, Adjust, and analyzed Creative data. It may run for several minutes and waits for terminal evidence by default, which is the correct behavior for an upstream agent that must process the result. Do not add `--detach` merely to avoid waiting. If the process is interrupted, resume the durable server job with the exact `sienna wait <request_id> --json` command printed on stderr. Use `--detach` only when the user explicitly wants background execution and accepts a non-terminal success response. It plans independent reads in parallel and returns unsynthesized raw evidence in a typed envelope whose `data.status` is `completed`, `partial`, or `needs_input`. Interpret `data.evidence` yourself; no `answer` field is produced. Use [references/workflows.md](references/workflows.md) for examples and evidence interpretation.
+`ask` plans independent Meta, Google Ads, Adjust, and Creative reads in parallel and returns unsynthesized raw evidence. It may run for several minutes and waits for terminal evidence by default. Do not add `--detach` merely to avoid waiting. If the process is interrupted, resume with the exact `sienna wait <request_id> --json` command printed on stderr. Interpret `data.evidence` yourself; no `answer` field is produced.
 
 When it returns `status: needs_input`:
 
@@ -83,9 +87,29 @@ When it returns `status: needs_input`:
 2. After the user answers, run the returned exact `answer_command`, which includes the server request id, as a new CLI invocation with `--json`.
 3. Repeat only if another `needs_input` is returned. State is user-scoped, server-managed, and expires; no local pending file is required.
 
-For `partial`, answer only from returned evidence and identify the missing provider or scope from `warnings`. When any evidence has `complete:false`, either narrow and re-ask or run the returned exact `continue_command`; continuation skips the planner and resumes the saved provider cursor. Direct `account list`, `meta get`, Google reads, `adjust report`, and Creative reads are deprecated fallbacks for backend outages, large raw diagnostics, and existing-script migration. They may emit a stderr warning without changing stdout. Mutation requests remain unsupported by `ask` and follow the guarded workflow below.
+For `partial`, answer only from returned evidence and identify failed or missing required coverage from `gaps`. Treat `warnings` as interpretation context such as assumptions and date-range caveats. When any evidence has `complete:false`, run the returned exact `continue_command` when more pages are required; continuation skips the planner and resumes the saved provider cursor. Without a continuation command, use the available evidence first and follow each required gap's direct-read recovery only when that missing coverage is needed. Do not start another broad `sienna ask` merely to repair a known provider path.
+
+Direct `account list`, `meta get`, Google reads, `adjust events`/`report`, and Creative `list`/`show`/`search` remain fully supported. Use them when the path is already known, or for pagination or large raw diagnostics. For a named Adjust event, resolve it with `adjust events --tokens-mapping --json`, then use the returned event id with an `_events` suffix as the report metric; never use an SDK token or bare event id as a metric. Mutation requests remain unsupported by `ask` and follow the guarded workflow below.
 
 Ctrl-C, a broken client connection, or a polling network error does not cancel a query job. Use `sienna cancel <request_id> --dry-run --json` to inspect the target and only run the command without `--dry-run` after explicit cancellation is intended. Cancellation is cooperative, so an already-running provider read may finish while no new reads are started.
+
+## Inspect Provider Query History
+
+Use the CLI-only history surface to inspect Meta, Google Ads, and Adjust calls:
+
+```sh
+"$SIENNA_BIN" history list --json
+"$SIENNA_BIN" history show <HISTORY_ID> --json
+```
+
+`history list` is a body-free bounded summary. Use `history show` with global
+`--json` only when the full canonical request and redacted provider result are
+needed. History is retained for at most 30 days by default (90-day configured
+maximum) and completed rows may be evicted earlier by per-user/environment
+record or byte quotas. It is secret-free and separate from the 24-hour
+conversation trace: prompts, confirmation Q&A, planner messages, and final
+natural-language answers are not provider history. Hosted MCP intentionally has
+no history retrieval tool; do not invent or request one.
 
 ## Guard Mutations
 

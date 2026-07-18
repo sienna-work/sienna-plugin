@@ -3,11 +3,28 @@
 ## Output
 
 - Typed commands return `{"ok":true,"data":...}` or `{"ok":false,"error":{"kind","message","recovery"}}` with `--json`.
-- Deprecated direct `meta get`, `google query`, and `adjust report` reads keep returning upstream JSON without the Sienna success envelope during migration.
+- Direct `meta get`, `google query`, and `adjust report` reads return upstream JSON without the Sienna success envelope.
 - `ask --json` waits without a CLI-wide deadline and emits exactly one stdout JSON document at terminal. Completed or partial `data` contains `status`, raw `evidence`, `warnings`, and `timing` and never contains a synthesized `answer`; `needs_input` contains `request_id`, `question`, `answer_contract`, and the exact `answer_command`.
 - Exit codes are stable: `0` success, `2` validation, `3` not found, `4` authentication, `5` network, `1` internal.
 - stdout contains results. stderr contains diagnostics and optional update hints.
 - Never echo access tokens, refresh tokens, session tokens, appsecret proofs, poll secrets, or secret-bearing URLs.
+- `history list --json` returns one typed Sienna envelope containing body-free summaries, retention/quota metadata, and an opaque `next_cursor`. `history show <HISTORY_ID> --json` is the only history command that returns the full canonical request and redacted provider result.
+
+## Provider History
+
+```sh
+sienna history list --provider meta --limit 20 --json
+sienna history list --executor-caller agent --cursor <OPAQUE_CURSOR> --json
+sienna history show <HISTORY_ID> --json
+```
+
+History supports `provider`, `operation`, `invocation-path`, `executor-caller`,
+and canonical provider `account` filters. Default output is bounded; lists never
+contain request or response bodies. Default maximum retention is 30 days and the
+configured maximum is 90 days, but tenant record/byte quotas can evict completed
+rows earlier. Provider history is secret-free and is not the 24-hour
+conversation trace: it contains no prompt, confirmation Q&A, planner message,
+or final natural-language answer. Hosted MCP exposes no history retrieval tool.
 
 ## Discovery
 
@@ -34,7 +51,7 @@ are opaque and can change after reconnection or a backend migration.
 - Cancellation: inspect with `sienna cancel <request_id> --dry-run --json`; cancellation is explicit and cooperative and may allow an in-flight provider read to finish.
 - Natural-language `needs_input`: ask the user the returned question, then run the returned `sienna answer <request_id> "<exact answer>" --json`. Do not invent the answer.
 - Natural-language `partial`: use only returned evidence and identify warnings. For `complete:false`, narrow the query or run the returned `sienna continue <request_id> --json`; if the provider cursor expired, start a narrower `ask`.
-- Natural-language backend failure: retry once with a narrower question, then use a deprecated direct read only for outage diagnosis or existing-script migration.
+- Natural-language backend failure: retry once with a narrower question, then use a direct structured read (`meta get`, `google query`, `adjust report`, or Creative commands) when the path is known.
 - Ask pagination: the executor follows provider cursors automatically within page, byte, and timeout budgets. It returns all fetched rows plus `pages`, `complete`, and `next_cursor`; continuation is server-managed.
 - Social account auth error: refresh with `sienna social account list`; if
   `needs_reconnect` is true, start `sienna social account connect instagram`.

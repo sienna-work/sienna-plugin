@@ -1,8 +1,8 @@
 # Advertising Workflows
 
-## Ask First
+## Natural-Language Ask
 
-Send the complete question once so independent provider reads can run in parallel:
+For multi-provider or open-ended questions, send the complete question once so independent provider reads can run in parallel:
 
 ```sh
 sienna ask "최근 7일 Meta와 Google Ads 캠페인 성과를 비교해줘" --json
@@ -13,11 +13,11 @@ sienna answer <request_id> "<exact user answer>" --json
 sienna wait <request_id> --json
 ```
 
-Let `ask`, `answer`, and `continue` wait for terminal evidence even when they take several minutes. Use `--detach` only for an explicitly requested background handoff. Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. Use `data.gaps` for missing optional or failed provider coverage; `warnings` stay for assumptions and date-range caveats only. When `continue_command` is present, run it exactly for pagination. When `status=completed` with non-empty `gaps`, analyze the returned evidence first and follow each gap recovery only if that coverage is still required. When `status=partial` without `continue_command`, start a new `sienna ask` after resolving required gaps — do not use `sienna answer` for free-form follow-ups.
+Let `ask`, `answer`, and `continue` wait for terminal evidence even when they take several minutes. Use `--detach` only for an explicitly requested background handoff. Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. Use `data.gaps` for missing optional or failed provider coverage; `warnings` stay for assumptions and date-range caveats only. When `continue_command` is present, run it exactly for pagination. When `status=completed` with non-empty `gaps`, analyze the returned evidence first and follow each gap recovery only if that coverage is still required. When `status=partial` without `continue_command`, use the available evidence first and follow each required gap's direct-read recovery only when the missing coverage is needed. Do not use `sienna answer` for free-form follow-ups or start another broad `sienna ask` merely to repair a known provider path.
 
-## Structured Relay Commands
+## Structured Direct Reads
 
-When AgentCore is unavailable, use the commands below. They bypass AgentCore but still use the same authenticated Query API relay and server-side credentials. Query API or broker outages have no local provider fallback.
+Use the commands below when the provider path is already known, or for pagination or large raw diagnostics. They bypass AgentCore but still use the same authenticated Query API relay and server-side credentials. Query API or broker outages have no local provider fallback.
 
 ### Meta Ads
 
@@ -46,17 +46,18 @@ Discover the customer ID first. Add `segments.date` for daily rows and `--login-
 ### Adjust
 
 ```sh
+sienna adjust events --tokens-mapping --json
 sienna adjust report \
   --dimensions app \
-  --metrics installs,revenue \
+  --metrics installs,<EVENT_ID>_events \
   --date-period -7d:-1d --json
 ```
 
-Adjust access is read-only. Use the broker browser flow for normal linking; never ask the user to paste an Adjust token into chat.
+For a named event, resolve the exact event with `adjust events`; add `_events` to the returned event id before using it as a report metric. Never use an SDK token or bare event id as a metric. Adjust access is read-only. Use the broker browser flow for normal linking; never ask the user to paste an Adjust token into chat.
 
 ### Creative Performance Join
 
-`sienna ask` owns this join by default. The manual fallback for outage diagnosis is:
+Join live performance to analyzed features by ad ID. Either ask Sienna once, or compose the join with direct commands:
 
 1. Query Meta insights at `level=ad` and rank ads using the requested business metric. Preserve `ad_id`.
 2. Fetch analyzed features with `sienna creative show --ad <AD_ID> --json` for representative top and comparison ads.
