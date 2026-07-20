@@ -21,6 +21,20 @@ bodies. An `insufficient_scope` response keeps the JSON-RPC `isError` body and i
 RFC 6750 Bearer challenge with the exact required scope and protected-resource metadata URL,
 so the host can start step-up OAuth consent.
 
+`sienna_ask` accepts the same optional top-level `crew` as the CLI. Omission uses
+the server router across `performance`, `measurement`, and `creative`; explicit
+selection fixes the root profile, and `strategy` is disabled. Crew is a profile
+inside one Query Agent, not a request for host multi-agent or subagent work.
+Results, `sienna_job_status`, and `sienna_job_continue` preserve raw evidence and
+the same typed `requested_crew`, `resolved_crew`, `routing_source`, and
+`catalog_version` provenance. Continue does not accept a crew override.
+
+Hosted MCP does not expose `sienna_job_answer`. If a Hosted Ask returns
+`needs_input`, do not guess the answer or try to resume that Hosted request ID
+through the CLI. Start the same question as a new local `sienna ask`, present
+its returned question to the user, and resume only with the exact local
+`sienna answer <request_id> "<answer>" --json` command.
+
 Job status and continuation require the same active connection ID that created the job.
 The Sienna app lists each same-host connection generation independently and can revoke every
 active or reauthentication-required connection without logging the local CLI out.

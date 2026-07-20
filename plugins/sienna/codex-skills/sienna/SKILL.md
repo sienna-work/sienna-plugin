@@ -19,7 +19,7 @@ If no executable is available, explain that the official checksum-verifying inst
 curl -fsSL https://get.sienna.work/install.sh | bash
 ```
 
-This Skill requires Sienna 0.15.0 or newer. Obtain approval before updating an older writable installation with `sienna update`.
+This Skill requires Sienna 0.17.0 or newer. Obtain approval before updating an older writable installation with `sienna update`.
 
 ## Follow the CLI contract
 
@@ -54,9 +54,27 @@ For a multi-provider or open-ended read-only question, prefer `ask`. Include the
 "$SIENNA_BIN" ask "<complete data question>" --json
 ```
 
+<!-- ask-crew-contract:start -->
+### Ask crew contract
+
+Crew is a root execution profile inside Sienna's single Query Agent. It does not create host subagents, an agent team, specialist handoffs, or a second synthesis layer.
+
+| Selection | Contract |
+| --- | --- |
+| `performance` | Broad cross-provider delivery, spend, efficiency, ranking, and trend evidence. |
+| `measurement` | Attribution, conversion definitions, tracking quality, incrementality, and cross-provider discrepancy evidence. |
+| `creative` | Analyzed creative features and pattern evidence, joined to live performance by stable IDs when needed. |
+| Omitted `--crew` | The server selects one active profile with its low-latency router; low confidence or router failure falls back to `performance`. |
+| Explicit `--crew <key>` | Fixes the root to that active profile and bypasses routing. `strategy` is known but disabled. |
+| Result and resume | Returns raw `evidence`, `gaps`, `warnings`, `timing`, and typed `crew` provenance. `answer` and `continue` inherit the original crew and accept no crew override. |
+| Hosted MCP | `sienna_ask` accepts the same optional top-level `crew`; omission, explicit selection, errors, provenance, and resume semantics match the CLI. |
+
+The only CLI form is `sienna ask "<complete question>" [--crew <crew-key>] [--detach]`. A crew key must never be a positional argument; use `--crew creative` after the complete question. A crew never synthesizes or replaces the final answer: interpret the returned raw evidence in the host agent.
+<!-- ask-crew-contract:end -->
+
 Interpret the returned evidence in Codex. When the result asks for input, present its question to the user and then run the exact returned answer command. Read failed or missing required coverage from `gaps`, and treat `warnings` as interpretation context. When the result provides a continuation command, run that exact command if more data is needed. For a partial result without continuation, use the available evidence first and follow each required gap's direct-read recovery only when that coverage is needed; do not start another broad `sienna ask` merely to repair a known provider path.
 
-Structured direct reads remain fully supported when the provider path is already known, or for pagination or large raw diagnostics. Discover valid scopes with `account list` or `google accounts`, then use `meta get`, Google reads, `adjust events`/`report`, or Creative `list`/`show`/`search` as appropriate. For a named Adjust event, resolve it with `adjust events --tokens-mapping --json`, then use the returned event id with an `_events` suffix as the report metric; never use an SDK token or bare event id as a metric. These commands bypass AgentCore but still depend on Sienna's authenticated Query API or Creative service, so Query API or broker outages have no local provider fallback. For creative-performance analysis, either ask Sienna once or join live performance rows to analyzed features by ad ID.
+Structured direct reads remain fully supported when the provider path is already known, or for pagination or large raw diagnostics. Prefer `sienna ads …` for paid-ads work and `sienna social …` for organic Instagram. Discover valid scopes with `ads meta accounts` or `ads google accounts`, then use `ads meta get`, Google reads, `ads adjust events`/`report`, or `ads creative` `list`/`show`/`search` as appropriate. For a named Adjust event, resolve it with `ads adjust events --tokens-mapping --json`, then use the returned event id with an `_events` suffix as the report metric; never use an SDK token or bare event id as a metric. These commands bypass AgentCore but still depend on Sienna's authenticated Query API or Creative service, so Query API or broker outages have no local provider fallback. For creative-performance analysis, either ask Sienna once or join live performance rows to analyzed features by ad ID.
 
 ## Inspect provider query history
 
@@ -89,8 +107,10 @@ and link by `request_id` / `root_request_id`:
 Ask history is written only for terminal statuses
 (`completed`/`partial`/`failed`/`cancelled`), not for `needs_input`. It uses the
 same 30-day default retention family as provider history but a separate quota
-counter. It does not replace conversation-trace. Hosted MCP has no Ask history
-tool.
+counter. New rows expose nullable `requested_crew`, `resolved_crew`,
+`routing_source`, and `catalog_version`; null fields on a legacy row must not be
+inferred from its prompt. It does not replace conversation-trace. Hosted MCP
+has no Ask history tool.
 
 ## Guard changes
 

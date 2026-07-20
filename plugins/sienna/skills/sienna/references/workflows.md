@@ -1,19 +1,28 @@
 # Advertising Workflows
 
+Choose the surface by domain:
+
+- `sienna ask` — open-ended or multi-provider/multi-domain questions
+- `sienna ads …` — known paid-ads structured reads (Meta, Google, Adjust, creative analysis)
+- `sienna social …` — organic Instagram connect/post/metrics
+
 ## Natural-Language Ask
 
 For multi-provider or open-ended questions, send the complete question once so independent provider reads can run in parallel:
 
 ```sh
 sienna ask "최근 7일 Meta와 Google Ads 캠페인 성과를 비교해줘" --json
-sienna ask "지난 30일 ROAS 상위 Meta 광고의 공통 Creative 특징을 알려줘" --json
+sienna ask "지난 30일 ROAS 상위 Meta 광고의 공통 Creative 특징을 알려줘" --crew creative --json
+sienna ask "Meta와 Adjust 전환 집계 차이를 점검해줘" --crew measurement --json
 # If status is needs_input, ask the returned question and run answer_command, e.g.:
 sienna answer <request_id> "<exact user answer>" --json
 # If the CLI was interrupted, resume the same server job without starting over:
 sienna wait <request_id> --json
 ```
 
-Let `ask`, `answer`, and `continue` wait for terminal evidence even when they take several minutes. Use `--detach` only for an explicitly requested background handoff. Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. Use `data.gaps` for missing optional or failed provider coverage; `warnings` stay for assumptions and date-range caveats only. When `continue_command` is present, run it exactly for pagination. When `status=completed` with non-empty `gaps`, analyze the returned evidence first and follow each gap recovery only if that coverage is still required. When `status=partial` without `continue_command`, use the available evidence first and follow each required gap's direct-read recovery only when the missing coverage is needed. Do not use `sienna answer` for free-form follow-ups or start another broad `sienna ask` merely to repair a known provider path.
+Omit `--crew` for server auto selection. Use explicit `performance` for broad delivery/efficiency reads, `measurement` for attribution or tracking discrepancies, and `creative` for analyzed feature/pattern evidence. Explicit selection fixes the root profile; `strategy` is disabled. Crew is a profile inside one Query Agent, not a request for the host harness to create subagents.
+
+Let `ask`, `answer`, and `continue` wait for terminal evidence even when they take several minutes. Use `--detach` only for an explicitly requested background handoff. Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. Read `data.crew` as bounded provenance, and do not send a new crew on `answer` or `continue`; both inherit the root. Use `data.gaps` for missing optional or failed provider coverage; `warnings` stay for assumptions and date-range caveats only. When `continue_command` is present, run it exactly for pagination. When `status=completed` with non-empty `gaps`, analyze the returned evidence first and follow each gap recovery only if that coverage is still required. When `status=partial` without `continue_command`, use the available evidence first and follow each required gap's direct-read recovery only when the missing coverage is needed. Do not use `sienna answer` for free-form follow-ups or start another broad `sienna ask` merely to repair a known provider path.
 
 ## Structured Direct Reads
 
@@ -22,21 +31,21 @@ Use the commands below when the provider path is already known, or for paginatio
 ### Meta Ads
 
 ```sh
-sienna account list --json
-sienna meta get /me/adaccounts --param fields=id,name --json
-sienna meta get /act_<ID>/insights \
+sienna ads meta accounts --json
+sienna ads meta get /me/adaccounts --param fields=id,name --json
+sienna ads meta get /act_<ID>/insights \
   --param fields=ad_id,ad_name,spend,impressions,clicks,actions,purchase_roas \
   --param level=ad --param date_preset=last_30d --json
 ```
 
-`meta get` is read-only and does not auto-follow `paging`. Never provide `access_token` or `appsecret_proof` as parameters.
+`sienna ads meta get` is read-only and does not auto-follow `paging`. Never provide `access_token` or `appsecret_proof` as parameters.
 
 ### Google Ads
 
 ```sh
-sienna google accounts --json
-sienna google campaigns --customer <CUSTOMER_ID> --json
-sienna google query \
+sienna ads google accounts --json
+sienna ads google campaigns --customer <CUSTOMER_ID> --json
+sienna ads google query \
   "SELECT campaign.id, campaign.name, metrics.impressions, metrics.clicks, metrics.cost_micros FROM campaign WHERE segments.date DURING LAST_7_DAYS" \
   --customer <CUSTOMER_ID> --json
 ```
@@ -46,33 +55,33 @@ Discover the customer ID first. Add `segments.date` for daily rows and `--login-
 ### Adjust
 
 ```sh
-sienna adjust events --tokens-mapping --json
-sienna adjust report \
+sienna ads adjust events --tokens-mapping --json
+sienna ads adjust report \
   --dimensions app \
   --metrics installs,<EVENT_ID>_events \
   --date-period -7d:-1d --json
 ```
 
-For a named event, resolve the exact event with `adjust events`; add `_events` to the returned event id before using it as a report metric. Never use an SDK token or bare event id as a metric. Adjust access is read-only. Use the broker browser flow for normal linking; never ask the user to paste an Adjust token into chat.
+For a named event, resolve the exact event with `sienna ads adjust events`; add `_events` to the returned event id before using it as a report metric. Never use an SDK token or bare event id as a metric. Adjust access is read-only. Use the broker browser flow for normal linking; never ask the user to paste an Adjust token into chat.
 
 ### Creative Performance Join
 
 Join live performance to analyzed features by ad ID. Either ask Sienna once, or compose the join with direct commands:
 
 1. Query Meta insights at `level=ad` and rank ads using the requested business metric. Preserve `ad_id`.
-2. Fetch analyzed features with `sienna creative show --ad <AD_ID> --json` for representative top and comparison ads.
+2. Fetch analyzed features with `sienna ads creative show --ad <AD_ID> --json` for representative top and comparison ads.
 3. Join analysis records to performance rows by ad ID. Use the returned ad, ad set, campaign, and account join identifiers to validate scope.
 4. Compare features across groups and distinguish observed patterns from causal claims.
 
 Useful commands:
 
 ```sh
-sienna creative list --account act_<ID> --json
-sienna creative show --ad <AD_ID> --json
-sienna creative search "bright product demo, early CTA" --limit 5 --json
+sienna ads creative list --account act_<ID> --json
+sienna ads creative show --ad <AD_ID> --json
+sienna ads creative search "bright product demo, early CTA" --limit 5 --json
 ```
 
-A 404 may mean the creative is not analyzed yet or is outside the authenticated account. Use `creative list` to inspect `done`, `pending`, `failed`, or `excluded` state.
+A 404 may mean the creative is not analyzed yet or is outside the authenticated account. Use `sienna ads creative list` to inspect `done`, `pending`, `failed`, or `excluded` state.
 
 ## Instagram Social Publishing
 

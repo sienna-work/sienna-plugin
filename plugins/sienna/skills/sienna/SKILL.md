@@ -28,7 +28,7 @@ Use Sienna as the execution layer for advertising data and guarded social publis
    curl -fsSL https://get.sienna.work/install.sh | bash
    ```
 
-Set `SIENNA_BIN` to the resolved path and verify it with `"$SIENNA_BIN" --version`. This Skill requires Sienna 0.15.0 or newer. For an older writable host installation, obtain approval before running `sienna update`. Never download a runtime inside Cowork, and do not install another binary when a working host CLI or bundled Cowork runtime is present.
+Set `SIENNA_BIN` to the resolved path and verify it with `"$SIENNA_BIN" --version`. This Skill requires Sienna 0.17.0 or newer. For an older writable host installation, obtain approval before running `sienna update`. Never download a runtime inside Cowork, and do not install another binary when a working host CLI or bundled Cowork runtime is present.
 
 Supported surfaces are Claude Cowork Desktop, Claude Code, and local Codex CLI, Desktop, or IDE sessions. Do not claim support for ChatGPT web, Codex cloud, or another environment without a persistent local CLI and credential store.
 
@@ -36,7 +36,7 @@ This file governs the local Plugin surface. Sienna also has a separate read-only
 
 ## Follow The CLI Contract
 
-- Prefer `--json`. Typed commands use `{"ok":true,"data":...}` and structured error envelopes. `meta get` and `google query` return upstream JSON directly.
+- Prefer `--json`. Typed commands use `{"ok":true,"data":...}` and structured error envelopes. `ads meta get` and `ads google query` return upstream JSON directly.
 - Branch on exit codes: `0` success, `2` invalid input, `3` not found, `4` auth, `5` network, `1` internal.
 - Treat stdout as data and stderr as diagnostics. Never parse credential material from either stream.
 - Read [references/cli-contract.md](references/cli-contract.md) before constructing an unfamiliar command.
@@ -71,13 +71,31 @@ credential, or callback state.
 
 ## Query And Analyze
 
-For structured direct reads, discover accessible accounts before querying them. Use [references/workflows.md](references/workflows.md) for Meta, Google, Adjust, and creative-analysis command patterns. For creative-performance questions, join live performance rows to analyzed features by ad ID rather than treating either source alone as the answer.
+For structured direct reads, discover accessible accounts before querying them. Choose `sienna ads …` for paid-ads Meta/Google/Adjust/creative reads, `sienna social …` for organic Instagram account/post work, and `sienna ask` for open-ended or multi-domain questions. Use [references/workflows.md](references/workflows.md) for command patterns. For creative-performance questions, join live performance rows to analyzed features by ad ID rather than treating either source alone as the answer.
 
 For a multi-provider or open-ended read-only question, prefer:
 
 ```sh
 "$SIENNA_BIN" ask "<complete natural-language data question>" --json
 ```
+
+<!-- ask-crew-contract:start -->
+### Ask crew contract
+
+Crew is a root execution profile inside Sienna's single Query Agent. It does not create host subagents, an agent team, specialist handoffs, or a second synthesis layer.
+
+| Selection | Contract |
+| --- | --- |
+| `performance` | Broad cross-provider delivery, spend, efficiency, ranking, and trend evidence. |
+| `measurement` | Attribution, conversion definitions, tracking quality, incrementality, and cross-provider discrepancy evidence. |
+| `creative` | Analyzed creative features and pattern evidence, joined to live performance by stable IDs when needed. |
+| Omitted `--crew` | The server selects one active profile with its low-latency router; low confidence or router failure falls back to `performance`. |
+| Explicit `--crew <key>` | Fixes the root to that active profile and bypasses routing. `strategy` is known but disabled. |
+| Result and resume | Returns raw `evidence`, `gaps`, `warnings`, `timing`, and typed `crew` provenance. `answer` and `continue` inherit the original crew and accept no crew override. |
+| Hosted MCP | `sienna_ask` accepts the same optional top-level `crew`; omission, explicit selection, errors, provenance, and resume semantics match the CLI. |
+
+The only CLI form is `sienna ask "<complete question>" [--crew <crew-key>] [--detach]`. A crew key must never be a positional argument; use `--crew creative` after the complete question. A crew never synthesizes or replaces the final answer: interpret the returned raw evidence in the host agent.
+<!-- ask-crew-contract:end -->
 
 `ask` plans independent Meta, Google Ads, Adjust, and Creative reads in parallel and returns unsynthesized raw evidence. It may run for several minutes and waits for terminal evidence by default. Do not add `--detach` merely to avoid waiting. If the process is interrupted, resume with the exact `sienna wait <request_id> --json` command printed on stderr. Interpret `data.evidence` yourself; no `answer` field is produced.
 
@@ -89,7 +107,7 @@ When it returns `status: needs_input`:
 
 For `partial`, answer only from returned evidence and identify failed or missing required coverage from `gaps`. Treat `warnings` as interpretation context such as assumptions and date-range caveats. When any evidence has `complete:false`, run the returned exact `continue_command` when more pages are required; continuation skips the planner and resumes the saved provider cursor. Without a continuation command, use the available evidence first and follow each required gap's direct-read recovery only when that missing coverage is needed. Do not start another broad `sienna ask` merely to repair a known provider path.
 
-Direct `account list`, `meta get`, Google reads, `adjust events`/`report`, and Creative `list`/`show`/`search` remain fully supported. Use them when the path is already known, or for pagination or large raw diagnostics. For a named Adjust event, resolve it with `adjust events --tokens-mapping --json`, then use the returned event id with an `_events` suffix as the report metric; never use an SDK token or bare event id as a metric. Mutation requests remain unsupported by `ask` and follow the guarded workflow below.
+Direct `sienna ads meta accounts`, `sienna ads meta get`, Google reads under `sienna ads google`, `sienna ads adjust events`/`report`, and `sienna ads creative` `list`/`show`/`search` remain fully supported. Use them when the path is already known, or for pagination or large raw diagnostics. For a named Adjust event, resolve it with `sienna ads adjust events --tokens-mapping --json`, then use the returned event id with an `_events` suffix as the report metric; never use an SDK token or bare event id as a metric. Mutation requests remain unsupported by `ask` and follow the guarded workflow below.
 
 Ctrl-C, a broken client connection, or a polling network error does not cancel a query job. Use `sienna cancel <request_id> --dry-run --json` to inspect the target and only run the command without `--dry-run` after explicit cancellation is intended. Cancellation is cooperative, so an already-running provider read may finish while no new reads are started.
 
@@ -125,8 +143,10 @@ and link by `request_id` / `root_request_id`:
 Ask history is written only for terminal statuses
 (`completed`/`partial`/`failed`/`cancelled`), not for `needs_input`. It uses the
 same 30-day default retention family as provider history but a separate quota
-counter. It does not replace conversation-trace. Hosted MCP has no Ask history
-tool.
+counter. New rows expose nullable `requested_crew`, `resolved_crew`,
+`routing_source`, and `catalog_version`; null fields on a legacy row must not be
+inferred from its prompt. It does not replace conversation-trace. Hosted MCP
+has no Ask history tool.
 
 ## Guard Mutations
 
