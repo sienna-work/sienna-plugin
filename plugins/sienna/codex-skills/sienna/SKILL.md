@@ -19,7 +19,7 @@ If no executable is available, explain that the official checksum-verifying inst
 curl -fsSL https://get.sienna.work/install.sh | bash
 ```
 
-This Skill requires Sienna 0.17.1 or newer. Obtain approval before updating an older writable installation with `sienna setup update`.
+This Skill requires Sienna 0.17.4 or newer. Obtain approval before updating an older writable installation with `sienna setup update`.
 
 ## Follow the CLI contract
 
