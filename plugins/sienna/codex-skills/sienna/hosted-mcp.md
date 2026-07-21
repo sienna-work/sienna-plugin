@@ -31,9 +31,9 @@ the same typed `requested_crew`, `resolved_crew`, `routing_source`, and
 
 Hosted MCP does not expose `sienna_job_answer`. If a Hosted Ask returns
 `needs_input`, do not guess the answer or try to resume that Hosted request ID
-through the CLI. Start the same question as a new local `sienna ask`, present
+through the CLI. Start the same question as a new local `sienna ask query`, present
 its returned question to the user, and resume only with the exact local
-`sienna answer <request_id> "<answer>" --json` command.
+`sienna ask answer <request_id> "<answer>" --json` command.
 
 Job status and continuation require the same active connection ID that created the job.
 The Sienna app lists each same-host connection generation independently and can revoke every

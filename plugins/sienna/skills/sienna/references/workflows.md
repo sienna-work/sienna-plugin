@@ -2,7 +2,7 @@
 
 Choose the surface by domain:
 
-- `sienna ask` — open-ended or multi-provider/multi-domain questions
+- `sienna ask query` — open-ended or multi-provider/multi-domain questions
 - `sienna ads …` — known paid-ads structured reads (Meta, Google, Adjust, creative analysis)
 - `sienna social …` — organic Instagram connect/post/metrics
 
@@ -11,18 +11,18 @@ Choose the surface by domain:
 For multi-provider or open-ended questions, send the complete question once so independent provider reads can run in parallel:
 
 ```sh
-sienna ask "최근 7일 Meta와 Google Ads 캠페인 성과를 비교해줘" --json
-sienna ask "지난 30일 ROAS 상위 Meta 광고의 공통 Creative 특징을 알려줘" --crew creative --json
-sienna ask "Meta와 Adjust 전환 집계 차이를 점검해줘" --crew measurement --json
+sienna ask query "최근 7일 Meta와 Google Ads 캠페인 성과를 비교해줘" --json
+sienna ask query "지난 30일 ROAS 상위 Meta 광고의 공통 Creative 특징을 알려줘" --crew creative --json
+sienna ask query "Meta와 Adjust 전환 집계 차이를 점검해줘" --crew measurement --json
 # If status is needs_input, ask the returned question and run answer_command, e.g.:
-sienna answer <request_id> "<exact user answer>" --json
+sienna ask answer <request_id> "<exact user answer>" --json
 # If the CLI was interrupted, resume the same server job without starting over:
-sienna wait <request_id> --json
+sienna ask wait <request_id> --json
 ```
 
 Omit `--crew` for server auto selection. Use explicit `performance` for broad delivery/efficiency reads, `measurement` for attribution or tracking discrepancies, and `creative` for analyzed feature/pattern evidence. Explicit selection fixes the root profile; `strategy` is disabled. Crew is a profile inside one Query Agent, not a request for the host harness to create subagents.
 
-Let `ask`, `answer`, and `continue` wait for terminal evidence even when they take several minutes. Use `--detach` only for an explicitly requested background handoff. Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. Read `data.crew` as bounded provenance, and do not send a new crew on `answer` or `continue`; both inherit the root. Use `data.gaps` for missing optional or failed provider coverage; `warnings` stay for assumptions and date-range caveats only. When `continue_command` is present, run it exactly for pagination. When `status=completed` with non-empty `gaps`, analyze the returned evidence first and follow each gap recovery only if that coverage is still required. When `status=partial` without `continue_command`, use the available evidence first and follow each required gap's direct-read recovery only when the missing coverage is needed. Do not use `sienna answer` for free-form follow-ups or start another broad `sienna ask` merely to repair a known provider path.
+Let `ask`, `answer`, and `continue` wait for terminal evidence even when they take several minutes. Use `--detach` only for an explicitly requested background handoff. Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. Read `data.crew` as bounded provenance, and do not send a new crew on `answer` or `continue`; both inherit the root. Use `data.gaps` for missing optional or failed provider coverage; `warnings` stay for assumptions and date-range caveats only. When `continue_command` is present, run it exactly for pagination. When `status=completed` with non-empty `gaps`, analyze the returned evidence first and follow each gap recovery only if that coverage is still required. When `status=partial` without `continue_command`, use the available evidence first and follow each required gap's direct-read recovery only when the missing coverage is needed. Do not use `sienna ask answer` for free-form follow-ups or start another broad `sienna ask query` merely to repair a known provider path.
 
 ## Structured Direct Reads
 
@@ -120,7 +120,7 @@ follow-up mutations the same way:
 
 ```sh
 sienna social post list --json
-sienna social post get <POST_ID> --json
+sienna social post show <POST_ID> --json
 sienna social post cancel <POST_ID> --dry-run --json
 sienna social post retry <POST_ID> --dry-run --json
 sienna social account disconnect <SOCIAL_ACCOUNT_ID> --dry-run --json

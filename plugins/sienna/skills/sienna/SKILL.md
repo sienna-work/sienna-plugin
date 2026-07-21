@@ -28,7 +28,7 @@ Use Sienna as the execution layer for advertising data and guarded social publis
    curl -fsSL https://get.sienna.work/install.sh | bash
    ```
 
-Set `SIENNA_BIN` to the resolved path and verify it with `"$SIENNA_BIN" --version`. This Skill requires Sienna 0.17.0 or newer. For an older writable host installation, obtain approval before running `sienna update`. Never download a runtime inside Cowork, and do not install another binary when a working host CLI or bundled Cowork runtime is present.
+Set `SIENNA_BIN` to the resolved path and verify it with `"$SIENNA_BIN" --version`. This Skill requires Sienna 0.17.1 or newer. For an older writable host installation, obtain approval before running `sienna setup update`. Never download a runtime inside Cowork, and do not install another binary when a working host CLI or bundled Cowork runtime is present.
 
 Supported surfaces are Claude Cowork Desktop, Claude Code, and local Codex CLI, Desktop, or IDE sessions. Do not claim support for ChatGPT web, Codex cloud, or another environment without a persistent local CLI and credential store.
 
@@ -47,9 +47,9 @@ This file governs the local Plugin surface. Sienna also has a separate read-only
 2. Start the required flow with one of:
 
    ```sh
-   "$SIENNA_BIN" login --no-browser --persist --json
-   "$SIENNA_BIN" link meta --no-browser --persist --json
-   "$SIENNA_BIN" link google --no-browser --persist --json
+   "$SIENNA_BIN" auth login --no-browser --persist --json
+   "$SIENNA_BIN" auth link meta --no-browser --persist --json
+   "$SIENNA_BIN" auth link google --no-browser --persist --json
    ```
 
 3. Show the returned `verification_url` to the user. Never show or request a poll secret, access token, refresh token, session token, or appsecret proof.
@@ -71,12 +71,12 @@ credential, or callback state.
 
 ## Query And Analyze
 
-For structured direct reads, discover accessible accounts before querying them. Choose `sienna ads …` for paid-ads Meta/Google/Adjust/creative reads, `sienna social …` for organic Instagram account/post work, and `sienna ask` for open-ended or multi-domain questions. Use [references/workflows.md](references/workflows.md) for command patterns. For creative-performance questions, join live performance rows to analyzed features by ad ID rather than treating either source alone as the answer.
+For structured direct reads, discover accessible accounts before querying them. Choose `sienna ads …` for paid-ads Meta/Google/Adjust/creative reads, `sienna social …` for organic Instagram account/post work, and `sienna ask query` for open-ended or multi-domain questions. Use [references/workflows.md](references/workflows.md) for command patterns. For creative-performance questions, join live performance rows to analyzed features by ad ID rather than treating either source alone as the answer.
 
 For a multi-provider or open-ended read-only question, prefer:
 
 ```sh
-"$SIENNA_BIN" ask "<complete natural-language data question>" --json
+"$SIENNA_BIN" ask query "<complete natural-language data question>" --json
 ```
 
 <!-- ask-crew-contract:start -->
@@ -94,10 +94,10 @@ Crew is a root execution profile inside Sienna's single Query Agent. It does not
 | Result and resume | Returns raw `evidence`, `gaps`, `warnings`, `timing`, and typed `crew` provenance. `answer` and `continue` inherit the original crew and accept no crew override. |
 | Hosted MCP | `sienna_ask` accepts the same optional top-level `crew`; omission, explicit selection, errors, provenance, and resume semantics match the CLI. |
 
-The only CLI form is `sienna ask "<complete question>" [--crew <crew-key>] [--detach]`. A crew key must never be a positional argument; use `--crew creative` after the complete question. A crew never synthesizes or replaces the final answer: interpret the returned raw evidence in the host agent.
+The only CLI form is `sienna ask query "<complete question>" [--crew <crew-key>] [--detach]`. A crew key must never be a positional argument; use `--crew creative` after the complete question. A crew never synthesizes or replaces the final answer: interpret the returned raw evidence in the host agent.
 <!-- ask-crew-contract:end -->
 
-`ask` plans independent Meta, Google Ads, Adjust, and Creative reads in parallel and returns unsynthesized raw evidence. It may run for several minutes and waits for terminal evidence by default. Do not add `--detach` merely to avoid waiting. If the process is interrupted, resume with the exact `sienna wait <request_id> --json` command printed on stderr. Interpret `data.evidence` yourself; no `answer` field is produced.
+`ask` plans independent Meta, Google Ads, Adjust, and Creative reads in parallel and returns unsynthesized raw evidence. It may run for several minutes and waits for terminal evidence by default. Do not add `--detach` merely to avoid waiting. If the process is interrupted, resume with the exact `sienna ask wait <request_id> --json` command printed on stderr. Interpret `data.evidence` yourself; no `answer` field is produced.
 
 When it returns `status: needs_input`:
 
@@ -105,22 +105,22 @@ When it returns `status: needs_input`:
 2. After the user answers, run the returned exact `answer_command`, which includes the server request id, as a new CLI invocation with `--json`.
 3. Repeat only if another `needs_input` is returned. State is user-scoped, server-managed, and expires; no local pending file is required.
 
-For `partial`, answer only from returned evidence and identify failed or missing required coverage from `gaps`. Treat `warnings` as interpretation context such as assumptions and date-range caveats. When any evidence has `complete:false`, run the returned exact `continue_command` when more pages are required; continuation skips the planner and resumes the saved provider cursor. Without a continuation command, use the available evidence first and follow each required gap's direct-read recovery only when that missing coverage is needed. Do not start another broad `sienna ask` merely to repair a known provider path.
+For `partial`, answer only from returned evidence and identify failed or missing required coverage from `gaps`. Treat `warnings` as interpretation context such as assumptions and date-range caveats. When any evidence has `complete:false`, run the returned exact `continue_command` when more pages are required; continuation skips the planner and resumes the saved provider cursor. Without a continuation command, use the available evidence first and follow each required gap's direct-read recovery only when that missing coverage is needed. Do not start another broad `sienna ask query` merely to repair a known provider path.
 
 Direct `sienna ads meta accounts`, `sienna ads meta get`, Google reads under `sienna ads google`, `sienna ads adjust events`/`report`, and `sienna ads creative` `list`/`show`/`search` remain fully supported. Use them when the path is already known, or for pagination or large raw diagnostics. For a named Adjust event, resolve it with `sienna ads adjust events --tokens-mapping --json`, then use the returned event id with an `_events` suffix as the report metric; never use an SDK token or bare event id as a metric. Mutation requests remain unsupported by `ask` and follow the guarded workflow below.
 
-Ctrl-C, a broken client connection, or a polling network error does not cancel a query job. Use `sienna cancel <request_id> --dry-run --json` to inspect the target and only run the command without `--dry-run` after explicit cancellation is intended. Cancellation is cooperative, so an already-running provider read may finish while no new reads are started.
+Ctrl-C, a broken client connection, or a polling network error does not cancel a query job. Use `sienna ask cancel <request_id> --dry-run --json` to inspect the target and only run the command without `--dry-run` after explicit cancellation is intended. Cancellation is cooperative, so an already-running provider read may finish while no new reads are started.
 
 ## Inspect Provider Query History
 
 Use the CLI-only history surface to inspect Meta, Google Ads, and Adjust calls:
 
 ```sh
-"$SIENNA_BIN" history list --json
-"$SIENNA_BIN" history show <HISTORY_ID> --json
+"$SIENNA_BIN" ads history list --json
+"$SIENNA_BIN" ads history show <HISTORY_ID> --json
 ```
 
-`history list` is a body-free bounded summary. Use `history show` with global
+`ads history list` is a body-free bounded summary. Use `ads history show` with global
 `--json` only when the full canonical request and redacted provider result are
 needed. History is retained for at most 30 days by default (90-day configured
 maximum) and completed rows may be evicted earlier by per-user/environment
@@ -136,8 +136,8 @@ timing, gaps/warnings summary). Evidence bodies stay in provider query history
 and link by `request_id` / `root_request_id`:
 
 ```sh
-"$SIENNA_BIN" history ask list --json
-"$SIENNA_BIN" history ask show <REQUEST_ID> --json
+"$SIENNA_BIN" ask history list --json
+"$SIENNA_BIN" ask history show <REQUEST_ID> --json
 ```
 
 Ask history is written only for terminal statuses

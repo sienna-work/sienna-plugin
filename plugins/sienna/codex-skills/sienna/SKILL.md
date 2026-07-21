@@ -19,7 +19,7 @@ If no executable is available, explain that the official checksum-verifying inst
 curl -fsSL https://get.sienna.work/install.sh | bash
 ```
 
-This Skill requires Sienna 0.17.0 or newer. Obtain approval before updating an older writable installation with `sienna update`.
+This Skill requires Sienna 0.17.1 or newer. Obtain approval before updating an older writable installation with `sienna setup update`.
 
 ## Follow the CLI contract
 
@@ -39,9 +39,9 @@ Check the current state first:
 Start a required browser flow without blocking Codex:
 
 ```sh
-"$SIENNA_BIN" login --no-browser --persist --json
-"$SIENNA_BIN" link meta --no-browser --persist --json
-"$SIENNA_BIN" link google --no-browser --persist --json
+"$SIENNA_BIN" auth login --no-browser --persist --json
+"$SIENNA_BIN" auth link meta --no-browser --persist --json
+"$SIENNA_BIN" auth link google --no-browser --persist --json
 ```
 
 Show only the returned `verification_url`. After the user completes the browser step, run the matching command once with `--resume --json`. If it remains pending, ask the user to finish the browser step and resume again.
@@ -51,7 +51,7 @@ Show only the returned `verification_url`. After the user completes the browser 
 For a multi-provider or open-ended read-only question, prefer `ask`. Include the complete question, providers, date range, comparisons, and requested breakdowns in one call:
 
 ```sh
-"$SIENNA_BIN" ask "<complete data question>" --json
+"$SIENNA_BIN" ask query "<complete data question>" --json
 ```
 
 <!-- ask-crew-contract:start -->
@@ -69,10 +69,10 @@ Crew is a root execution profile inside Sienna's single Query Agent. It does not
 | Result and resume | Returns raw `evidence`, `gaps`, `warnings`, `timing`, and typed `crew` provenance. `answer` and `continue` inherit the original crew and accept no crew override. |
 | Hosted MCP | `sienna_ask` accepts the same optional top-level `crew`; omission, explicit selection, errors, provenance, and resume semantics match the CLI. |
 
-The only CLI form is `sienna ask "<complete question>" [--crew <crew-key>] [--detach]`. A crew key must never be a positional argument; use `--crew creative` after the complete question. A crew never synthesizes or replaces the final answer: interpret the returned raw evidence in the host agent.
+The only CLI form is `sienna ask query "<complete question>" [--crew <crew-key>] [--detach]`. A crew key must never be a positional argument; use `--crew creative` after the complete question. A crew never synthesizes or replaces the final answer: interpret the returned raw evidence in the host agent.
 <!-- ask-crew-contract:end -->
 
-Interpret the returned evidence in Codex. When the result asks for input, present its question to the user and then run the exact returned answer command. Read failed or missing required coverage from `gaps`, and treat `warnings` as interpretation context. When the result provides a continuation command, run that exact command if more data is needed. For a partial result without continuation, use the available evidence first and follow each required gap's direct-read recovery only when that coverage is needed; do not start another broad `sienna ask` merely to repair a known provider path.
+Interpret the returned evidence in Codex. When the result asks for input, present its question to the user and then run the exact returned answer command. Read failed or missing required coverage from `gaps`, and treat `warnings` as interpretation context. When the result provides a continuation command, run that exact command if more data is needed. For a partial result without continuation, use the available evidence first and follow each required gap's direct-read recovery only when that coverage is needed; do not start another broad `sienna ask query` merely to repair a known provider path.
 
 Structured direct reads remain fully supported when the provider path is already known, or for pagination or large raw diagnostics. Prefer `sienna ads …` for paid-ads work and `sienna social …` for organic Instagram. Discover valid scopes with `ads meta accounts` or `ads google accounts`, then use `ads meta get`, Google reads, `ads adjust events`/`report`, or `ads creative` `list`/`show`/`search` as appropriate. For a named Adjust event, resolve it with `ads adjust events --tokens-mapping --json`, then use the returned event id with an `_events` suffix as the report metric; never use an SDK token or bare event id as a metric. These commands bypass AgentCore but still depend on Sienna's authenticated Query API or Creative service, so Query API or broker outages have no local provider fallback. For creative-performance analysis, either ask Sienna once or join live performance rows to analyzed features by ad ID.
 
@@ -81,11 +81,11 @@ Structured direct reads remain fully supported when the provider path is already
 Use the CLI-only history surface for Meta, Google Ads, and Adjust calls:
 
 ```sh
-"$SIENNA_BIN" history list --json
-"$SIENNA_BIN" history show <HISTORY_ID> --json
+"$SIENNA_BIN" ads history list --json
+"$SIENNA_BIN" ads history show <HISTORY_ID> --json
 ```
 
-The list is a body-free bounded summary. Global `--json` on `history show`
+The list is a body-free bounded summary. Global `--json` on `ads history show`
 returns the full canonical request and redacted provider result. Default maximum
 retention is 30 days (configured maximum 90 days), but per-user/environment
 record or byte quotas may evict completed rows earlier. Provider history is
@@ -100,8 +100,8 @@ timing, gaps/warnings summary). Evidence bodies stay in provider query history
 and link by `request_id` / `root_request_id`:
 
 ```sh
-"$SIENNA_BIN" history ask list --json
-"$SIENNA_BIN" history ask show <REQUEST_ID> --json
+"$SIENNA_BIN" ask history list --json
+"$SIENNA_BIN" ask history show <REQUEST_ID> --json
 ```
 
 Ask history is written only for terminal statuses
