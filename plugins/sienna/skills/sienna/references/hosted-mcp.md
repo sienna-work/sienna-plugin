@@ -7,7 +7,14 @@ Sienna 앱에서 별도로 관리하며 로컬 CLI session이나 provider creden
 - 프로덕션 remote URL: `https://mcp.sienna.work/mcp`
 - OAuth issuer: `https://auth.sienna.work`
 - 읽기 scope: `sienna.analytics.read`, `sienna.jobs.read`, `sienna.creative.read`
-- 도구: `sienna_ask`, `sienna_job_status`, `sienna_job_continue`, `sienna_read`
+- lifecycle 쓰기 scope: `sienna.jobs.write` (`sienna_job_cancel` 전용)
+- 도구: `sienna_ask`, `sienna_job_status`, `sienna_job_continue`, `sienna_job_cancel`,
+  `sienna_read`
+
+Hosted MCP에는 Rooms tool이 없다. Room 생성·목록·message·turn/group wait,
+handoff·synthesis·Decision·Memory는 persistent credential store가 있는 로컬
+Sienna CLI에서만 수행한다. Room/turn/group/proposal/memory ID를 Hosted
+`job_ref` 또는 Ask `request_id`와 교차 사용하지 않는다.
 
 remote endpoint는 완전 stateless Streamable HTTP이므로 임의 session ID를 만들거나
 재사용하지 않는다. 지원 protocol version은 `2025-11-25`, `2025-06-18`,
@@ -20,13 +27,22 @@ provider 조회는 analytics scope, creative 조회는 creative scope만 요구�
 resource metadata URL이 든 RFC 6750 Bearer challenge를 함께 반환하므로 호스트가 단계적
 OAuth 재동의를 시작할 수 있다.
 
-`sienna_ask`는 CLI와 같은 optional top-level `crew`를 받는다. 생략하면 서버 auto
+`sienna_ask`는 CLI와 같은 optional top-level `crew`와 research 요청 전용
+`research_depth=quick|standard|deep`를 받는다. depth 생략은 `standard`다. 생략하면 서버 auto
 router가 `performance`·`measurement`·`creative` 중 선택하고, 명시하면 해당 root
 profile로 고정한다. `strategy`는 비활성이다. crew는 하나의 Query Agent 안의 실행
-profile이지 Hosted host의 multi-agent/subagent 기능이 아니다. 결과와
-`sienna_job_status`·`sienna_job_continue`는 raw evidence와 동일한 typed
+profile이지 Hosted host의 multi-agent/subagent 기능이 아니다. 일반 결과와
+`sienna_job_status`·`sienna_job_continue`·`sienna_job_cancel`은 raw evidence와 동일한 typed
 `requested_crew`·`resolved_crew`·`routing_source`·`catalog_version` provenance를
-전달하며, continue에는 crew를 다시 보내지 않는다.
+전달하며, status·continue는 root의 crew와 depth를 상속한다. 별도 기간 field는
+지원하지 않는다. 완료된 Research status는 evidence와 내부 artifact 대신 exact 또는 lower-bound total,
+광고주별 inventory, count completeness, coverage scope와 대표 광고가 담긴 compact `result`를 기본 반환한다.
+Quick은 source exact count가 없으면 광고주·source별 최대 100건을 관찰하고 전체 최대 10건을 반환한다.
+`count_relation=at_least`는 exact로 표현하지 않는다. Standard/deep은 exact probe를 유지한다.
+`creative_center_top_ads`를 전체 TikTok 광고로 해석하거나 공개 source가 주지 않은 성과를
+추정하지 않는다.
+`sienna_job_cancel`은 해당 연결이 만든 root job과 연결된 research child에 협력적 취소를
+요청하며 `dry_run=true`로 사전 확인할 수 있다.
 
 Hosted MCP에는 `sienna_job_answer`가 없다. Hosted Ask가 `needs_input`을 반환하면 해당
 Hosted job을 CLI request id로 교차 재개하거나 답을 추정하지 않는다. 같은 질문을 로컬
@@ -37,10 +53,11 @@ Hosted MCP는 skills나 agents 파일을 HTTP로 서빙하지 않는다. 호스�
 자체 Skill을 포함하고 remote MCP URL만 참조한다. Notion Custom Agent는 Plugin package를
 설치하지 않고 승인된 workspace에서 Agent별 Custom MCP 연결을 만든다.
 
-Hosted 도구는 전부 읽기 전용이다. 게시, 수정, 삭제, provider 연결·해제는 등록하지 않으며
+Hosted 광고 도구는 provider 기준 읽기 전용이다. 게시, 수정, 삭제, provider 연결·해제는
+등록하지 않으며
 자연어 입력에 포함돼도 거부한다. Hosted job은 `mcp` 경로에서만 상태 확인·재개할 수 있고
 로컬 `sienna ask wait`/`continue`와 교차 재개하지 않는다. 상태 확인과 재개는 job을 만든
-동일한 활성 connection ID에서만 가능하다. Sienna 앱은 같은 호스트의 연결 generation을
+동일한 활성 connection ID에서만 가능하며 취소도 같은 경계를 따른다. Sienna 앱은 같은 호스트의 연결 generation을
 각각 표시하고 활성·재인증 필요 연결을 개별 철회한다. 한 Hosted 연결을 끊어도 로컬 CLI
 login은 유지된다.
 

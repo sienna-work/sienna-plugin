@@ -14,15 +14,16 @@ For multi-provider or open-ended questions, send the complete question once so i
 sienna ask query "최근 7일 Meta와 Google Ads 캠페인 성과를 비교해줘" --json
 sienna ask query "지난 30일 ROAS 상위 Meta 광고의 공통 Creative 특징을 알려줘" --crew creative --json
 sienna ask query "Meta와 Adjust 전환 집계 차이를 점검해줘" --crew measurement --json
+sienna ask query "경쟁사들은 요즘 어떤 공개 광고를 하지?" --crew research --depth standard --json
 # If status is needs_input, ask the returned question and run answer_command, e.g.:
 sienna ask answer <request_id> "<exact user answer>" --json
 # If the CLI was interrupted, resume the same server job without starting over:
 sienna ask wait <request_id> --json
 ```
 
-Omit `--crew` for server auto selection. Use explicit `performance` for broad delivery/efficiency reads, `measurement` for attribution or tracking discrepancies, and `creative` for analyzed feature/pattern evidence. Explicit selection fixes the root profile; `strategy` is disabled. Crew is a profile inside one Query Agent, not a request for the host harness to create subagents.
+Omit `--crew` for server auto selection. Use explicit `performance` for broad delivery/efficiency reads, `measurement` for attribution or tracking discrepancies, `creative` for owned analyzed feature/pattern evidence, and `research` for on-demand public competitor ads. Research depth is `quick|standard|deep`, defaults to `standard`, and is not accepted on follow-up lifecycle commands. Quick uses exact source totals when cheap, otherwise observes at most 100 ads per accepted advertiser/source and returns at most 10 representative ads overall. Preserve `count_complete=false` and `count_relation=at_least` as a lower bound. Standard/deep retain exact inventory probes and can return `kind=coverage` at the source cap. The current release has no research period input.
 
-Let `ask`, `answer`, and `continue` wait for terminal evidence even when they take several minutes. Use `--detach` only for an explicitly requested background handoff. Interpret `data.evidence` directly; `ask` does not synthesize an `answer`. Read `data.crew` as bounded provenance, and do not send a new crew on `answer` or `continue`; both inherit the root. Use `data.gaps` for missing optional or failed provider coverage; `warnings` stay for assumptions and date-range caveats only. When `continue_command` is present, run it exactly for pagination. When `status=completed` with non-empty `gaps`, analyze the returned evidence first and follow each gap recovery only if that coverage is still required. When `status=partial` without `continue_command`, use the available evidence first and follow each required gap's direct-read recovery only when the missing coverage is needed. Do not use `sienna ask answer` for free-form follow-ups or start another broad `sienna ask query` merely to repair a known provider path.
+Let `ask`, `answer`, and `continue` wait for terminal evidence even when they take several minutes. Use `--detach` only for an explicitly requested background handoff. Interpret ordinary `data.evidence` directly; for completed Research, interpret the direct structured `data` totals, count relation, advertiser inventories, coverage scopes, and representative ads. `ask` does not synthesize an `answer`. Read crew provenance when present, and do not send a new crew on `answer` or `continue`; both inherit the root. Use gaps for missing optional or failed provider coverage and warnings for interpretation caveats. Never treat a representative sample count as the total or an `at_least` value as exact. Do not use `sienna ask answer` for free-form follow-ups or start another broad `sienna ask query` merely to repair a known provider path.
 
 ## Structured Direct Reads
 
@@ -147,10 +148,12 @@ Metrics are cumulative provider snapshots with a per-post `last_updated` time;
 there is no per-day series, so compare posts against each other or re-poll for
 fresh totals. The list range is limited to 366 days and pages of 1–100 items.
 
-Posts published outside Sienna are included with `"source": "external"`
-(filter with `--source sienna|external|all`). External posts are metrics-only:
-`post get`, `cancel`, and `retry` reject them with a `not_found` error whose
-recovery hint explains the read-only contract — do not retry those calls.
+Owned posts discovered for connected accounts outside Sienna are included with `"source": "external"`
+(filter lists and metrics with `--source sienna|external|all`). Recent external
+posts from connected accounts can be listed, shown, searched, profiled, and
+joined with metrics. Arbitrary public URLs and competitor-account posts remain
+unsupported. External posts are read-only: `cancel`, `retry`, and their dry-runs
+reject them with a typed `read_only` error — do not retry those calls.
 
 If metrics fail with a `validation` error mentioning the analytics add-on, the
 provider plan does not include analytics. Report it to the operator; account
