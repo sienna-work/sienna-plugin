@@ -1,7 +1,7 @@
 {
   "name": "sienna",
-  "version": "0.12.23",
-  "description": "Manage Instagram publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance through Sienna's parallel Query Agent.",
+  "version": "0.12.28",
+  "description": "Manage Instagram, X, and LinkedIn publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance with Sienna.",
   "author": {
     "name": "Sienna"
   },
@@ -11,6 +11,8 @@
   "keywords": [
     "social-media",
     "instagram",
+    "x",
+    "linkedin",
     "advertising",
     "analytics"
   ],
@@ -18,7 +20,7 @@
   "interface": {
     "displayName": "Sienna",
     "shortDescription": "Manage social publishing and advertising analytics with Sienna.",
-    "longDescription": "Manage Instagram publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance through Sienna's parallel Query Agent.",
+    "longDescription": "Manage Instagram, X, and LinkedIn publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance with Sienna.",
     "developerName": "Sienna",
     "category": "Productivity",
     "capabilities": [
@@ -28,7 +30,7 @@
     ],
     "websiteURL": "https://sienna.work",
     "defaultPrompt": [
-      "Connect Instagram and safely prepare a social post.",
+      "Connect Instagram, X, or LinkedIn and safely prepare a social post.",
       "Analyze recent ad performance and explain the strongest creative patterns.",
       "Compare Meta and Google campaign performance for the last seven days."
     ]

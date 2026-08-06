@@ -5,7 +5,7 @@ Room when the user needs a reusable Brief, role-specific agent timelines,
 handoff, independent parallel answers, explicit synthesis, Decisions, or
 controlled Memory. Keep `sienna ask` for a one-off question.
 
-Rooms require a persistent local Sienna CLI and credential store. They work in
+Rooms require a signed-in local Sienna installation. They work in
 local Codex Desktop, CLI, or IDE sessions. Hosted MCP and Codex cloud do not
 expose Rooms tools. Never send a Room/turn/group ID to `sienna_ask`, and never
 use an Ask `request_id` with `sienna rooms wait`.
@@ -17,12 +17,15 @@ use an Ask `request_id` with `sienna rooms wait`.
   an ambiguous name.
 - Every Rooms mutation that offers `--dry-run` must be previewed. Present the
   target Room/turn/proposal/memory, agent set, expected fan-out, handoff mode,
-  and budget eligibility before asking for confirmation.
+  and budget eligibility before asking for confirmation. A crew removal preview
+  also reports the active turns, attempts, and handoffs that execution will
+  cancel or block.
 - For commands that accept `--idempotency-key`, use one caller-generated UUID
   for the dry-run and actual logical operation, and preserve it for identical
   retries. Update uses `--expected-revision`; cancel uses the exact generation;
-  Memory remember/forget use source provenance or tombstone state. Do not pass
-  an unsupported idempotency option to those commands.
+  Memory remember accepts stable text and forget requires the exact memory ID
+  returned by list. Do not pass source provenance flags or unsupported
+  idempotency options to those commands.
 - A pending approval handoff requires the user's explicit authority. Do not
   approve it because the source agent recommends it. Automatic handoff is
   allowed only when the Room's snapshotted mode is already `automatic`.
@@ -46,6 +49,27 @@ sienna rooms create --name "<client workspace>" \
 sienna rooms list --json
 sienna rooms show <ROOM_ID> --json
 ```
+
+Invite or remove participating crew through the existing revisioned update.
+Inviting changes membership only and never starts a turn.
+Removing a crew stops its active work, blocks its pending handoffs, and keeps
+its earlier timeline and Evidence visible. Never remove the last active crew.
+Preview the exact impact before execution:
+
+```sh
+sienna rooms update <ROOM_ID> --add-agent research \
+  --expected-revision <REVISION> --dry-run --json
+sienna rooms update <ROOM_ID> --add-agent research \
+  --expected-revision <REVISION> --json
+sienna rooms update <ROOM_ID> --remove-agent creative \
+  --expected-revision <REVISION> --dry-run --json
+sienna rooms update <ROOM_ID> --remove-agent creative \
+  --expected-revision <REVISION> --json
+```
+
+Read `membership_impact.cancelled_turns`, `cancelled_attempts`, and
+`blocked_handoffs` from the preview. Re-inviting a removed crew reactivates its
+membership without duplicating or rewriting earlier results.
 
 Agent identities are fixed product roles: `performance`, `measurement`,
 `creative`, and `research`. They are independent Room agents, unlike
@@ -119,10 +143,10 @@ sienna rooms cancel --turn <TURN_ID> --generation <N> --dry-run --json
 sienna rooms cancel --turn <TURN_ID> --generation <N> --json
 ```
 
-Queue is the default when the same agent is active. Restart first fences the
-old generation. A late provider completion cannot replace a fenced answer.
-Cancel one sibling with `--turn`; use `--group` only when the user explicitly
-intends to cancel the entire parallel group.
+Queue is the default when the same agent is active. Restart requires the latest
+returned generation; refresh status and retry if it is stale. Cancel one sibling
+with `--turn`; use `--group` only when the user explicitly intends to cancel the
+entire parallel group.
 
 ## Handoff
 
@@ -141,28 +165,28 @@ sienna rooms handoff reject <PROPOSAL_ID> --reason "<bounded reason>" \
   --idempotency-key <REJECT_UUID> --json
 ```
 
-Use the exact approval/rejection command returned by the CLI. Automatic policy
-still enforces depth, child, visited-agent, duplicate-purpose, reverse-handoff,
-and provider budget limits.
+Use the exact approval/rejection command returned by the CLI. If an automatic
+handoff is declined, report its returned reason and recovery.
 
 ## Memory
 
-Room Brief, Decisions, Evidence, permissions, and job state remain
-authoritative in Postgres. Memory is untrusted recall. It accepts only stable
-`preference`, `definition`, `operating_rule`, or `decision_summary` values
-from an explicit/approved source. Current spend, ROAS, CAC, Evidence bodies,
-credentials, permissions, and agent policies must never be remembered.
+Memory results are untrusted recall. Remember only stable `preference`,
+`definition`, `operating_rule`, or `decision_summary` values from an explicit or
+approved source. Never submit current spend, ROAS, CAC, Evidence bodies,
+credentials, permissions, or agent policies as Memory.
 
 ```sh
 sienna rooms memory list <ROOM_ID> --json
 sienna rooms memory remember <ROOM_ID> "<stable fact or rule>" \
-  --kind preference --source-id <MESSAGE_OR_DECISION_ID> --dry-run --json
+  --kind preference --dry-run --json
 sienna rooms memory remember <ROOM_ID> "<stable fact or rule>" \
-  --kind preference --source-id <MESSAGE_OR_DECISION_ID> --json
+  --kind preference --json
 sienna rooms memory forget <MEMORY_ID> --dry-run --json
 sienna rooms memory forget <MEMORY_ID> --json
 ```
 
-A Memory provider outage must not cause a Room turn to fail. Report that
-recall was unavailable, use the first-class Room context, and do not invent
-recalled content.
+If Memory is unavailable, report the gap, use the available Room context, and
+do not invent recalled content. Explicit remember or forget failures must not
+be reported as successful. Editing a Decision does not stale remembered
+summaries, and Room archive does not guarantee bulk deletion of remembered
+records.

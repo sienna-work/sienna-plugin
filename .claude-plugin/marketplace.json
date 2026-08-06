@@ -8,8 +8,8 @@
     {
       "name": "sienna",
       "source": "./plugins/sienna",
-      "description": "Manage Instagram publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance through Sienna's parallel Query Agent.",
-      "version": "0.12.23",
+      "description": "Manage Instagram, X, and LinkedIn publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance with Sienna.",
+      "version": "0.12.28",
       "author": {
         "name": "Sienna"
       },
@@ -20,6 +20,8 @@
       "tags": [
         "social-media",
         "instagram",
+        "x",
+        "linkedin",
         "advertising",
         "analytics"
       ],

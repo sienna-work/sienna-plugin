@@ -1,68 +1,62 @@
-# Hosted MCP와 로컬 Plugin 경계
+# Hosted MCP 사용 계약
 
-이 Skill은 Claude Cowork·Claude Code의 로컬 Plugin/CLI 실행 surface다. Hosted AI 연결은
-Sienna 앱에서 별도로 관리하며 로컬 CLI session이나 provider credential을 호스트에
-전달하지 않는다.
+이 문서는 Sienna 앱에서 제공되는 Hosted AI 연결의 입력과 출력을 설명한다.
+로컬 Plugin 작업에는 Sienna CLI를 사용하고, Hosted 연결에는 아래 도구만 사용한다.
+로컬 CLI의 request ID와 Hosted `job_ref`를 서로 바꾸어 사용하지 않는다.
 
-- 프로덕션 remote URL: `https://mcp.sienna.work/mcp`
-- OAuth issuer: `https://auth.sienna.work`
-- 읽기 scope: `sienna.analytics.read`, `sienna.jobs.read`, `sienna.creative.read`
-- lifecycle 쓰기 scope: `sienna.jobs.write` (`sienna_job_cancel` 전용)
-- 도구: `sienna_ask`, `sienna_job_status`, `sienna_job_continue`, `sienna_job_cancel`,
-  `sienna_read`
+## 연결 입력
 
-Hosted MCP에는 Rooms tool이 없다. Room 생성·목록·message·turn/group wait,
-handoff·synthesis·Decision·Memory는 persistent credential store가 있는 로컬
-Sienna CLI에서만 수행한다. Room/turn/group/proposal/memory ID를 Hosted
-`job_ref` 또는 Ask `request_id`와 교차 사용하지 않는다.
+- URL: `https://mcp.sienna.work/mcp`
+- OAuth 권한: `sienna.analytics.read`, `sienna.jobs.read`,
+  `sienna.creative.read`
+- 취소 권한: `sienna.jobs.write`가 추가로 필요할 수 있다.
+- 도구: `sienna_ask`, `sienna_job_status`, `sienna_job_continue`,
+  `sienna_job_cancel`, `sienna_read`
 
-remote endpoint는 완전 stateless Streamable HTTP이므로 임의 session ID를 만들거나
-재사용하지 않는다. 지원 protocol version은 `2025-11-25`, `2025-06-18`,
-`2025-03-26`이며 더 새로운 날짜를 요청하면 최신 지원 버전으로 협상한다. 성공한 도구
-결과는 `{ok:true,data:{...}}` envelope를 사용한다. 잘못된 tool arguments는 JSON-RPC
-`-32602`, 인증·transport 이외의 실행 실패는 HTTP 200의 `isError` tool result로 받는다.
-provider 조회는 analytics scope, creative 조회는 creative scope만 요구하며 오류는 provider
-원문 없이 안정적인 `kind`, `retryable`, 필요 시 `retry_after_ms`로 반환한다.
-`insufficient_scope`는 JSON-RPC `isError` 본문을 유지하면서 정확한 필요 scope와 protected
-resource metadata URL이 든 RFC 6750 Bearer challenge를 함께 반환하므로 호스트가 단계적
-OAuth 재동의를 시작할 수 있다.
+Sienna 앱이 현재 제공하는 호스트 연결만 안내한다. 연결 화면에 없는 호스트나
+설치 경로를 공개 지원이라고 주장하지 않는다.
 
-`sienna_ask`는 CLI와 같은 optional top-level `crew`와 research 요청 전용
-`research_depth=quick|standard|deep`를 받는다. depth 생략은 `standard`다. 생략하면 서버 auto
-router가 `performance`·`measurement`·`creative` 중 선택하고, 명시하면 해당 root
-profile로 고정한다. `strategy`는 비활성이다. crew는 하나의 Query Agent 안의 실행
-profile이지 Hosted host의 multi-agent/subagent 기능이 아니다. 일반 결과와
-`sienna_job_status`·`sienna_job_continue`·`sienna_job_cancel`은 raw evidence와 동일한 typed
-`requested_crew`·`resolved_crew`·`routing_source`·`catalog_version` provenance를
-전달하며, status·continue는 root의 crew와 depth를 상속한다. 별도 기간 field는
-지원하지 않는다. 완료된 Research status는 evidence와 내부 artifact 대신 exact 또는 lower-bound total,
-광고주별 inventory, count completeness, coverage scope와 대표 광고가 담긴 compact `result`를 기본 반환한다.
-Quick은 source exact count가 없으면 광고주·source별 최대 100건을 관찰하고 전체 최대 10건을 반환한다.
-`count_relation=at_least`는 exact로 표현하지 않는다. Standard/deep은 exact probe를 유지한다.
-`creative_center_top_ads`를 전체 TikTok 광고로 해석하거나 공개 source가 주지 않은 성과를
-추정하지 않는다.
-`sienna_job_cancel`은 해당 연결이 만든 root job과 연결된 research child에 협력적 취소를
-요청하며 `dry_run=true`로 사전 확인할 수 있다.
+## 요청과 결과
 
-Hosted MCP에는 `sienna_job_answer`가 없다. Hosted Ask가 `needs_input`을 반환하면 해당
-Hosted job을 CLI request id로 교차 재개하거나 답을 추정하지 않는다. 같은 질문을 로컬
-CLI에서 새로 `sienna ask query`한 뒤, 반환된 질문을 사용자에게 확인하고 정확한
-`sienna ask answer <request_id> "<answer>" --json` 명령으로만 재개한다.
+`sienna_ask`는 완전한 질문과 optional `crew`를 받는다. Research 요청에는 optional
+`research_depth=quick|standard|deep`를 추가할 수 있으며 생략값은 `standard`다.
+`crew`는 `performance`, `measurement`, `creative`, `research` 중 하나다.
+`strategy`는 사용할 수 없다.
 
-Hosted MCP는 skills나 agents 파일을 HTTP로 서빙하지 않는다. 호스트의 설치형 package는
-자체 Skill을 포함하고 remote MCP URL만 참조한다. Notion Custom Agent는 Plugin package를
-설치하지 않고 승인된 workspace에서 Agent별 Custom MCP 연결을 만든다.
+성공 결과는 `{ok:true,data:{...}}` 형태다. 오류 결과의 `kind`, `retryable`,
+`retry_after_ms`, `message`, `recovery`를 보존하고, `insufficient_scope`가 반환되면
+요청된 추가 권한을 사용자에게 설명한다. provider 원문이나 credential을 요청하거나
+표시하지 않는다.
 
-Hosted 광고 도구는 provider 기준 읽기 전용이다. 게시, 수정, 삭제, provider 연결·해제는
-등록하지 않으며
-자연어 입력에 포함돼도 거부한다. Hosted job은 `mcp` 경로에서만 상태 확인·재개할 수 있고
-로컬 `sienna ask wait`/`continue`와 교차 재개하지 않는다. 상태 확인과 재개는 job을 만든
-동일한 활성 connection ID에서만 가능하며 취소도 같은 경계를 따른다. Sienna 앱은 같은 호스트의 연결 generation을
-각각 표시하고 활성·재인증 필요 연결을 개별 철회한다. 한 Hosted 연결을 끊어도 로컬 CLI
-login은 유지된다.
+모든 completed 또는 partial Ask 결과에는 `schema_version=ask-answer-v1`,
+일치하는 status, 근거가 연결된 claim/action, crew, answer policy provenance를
+갖는 사용자용 `answer`가 포함된다. 일반 결과에는 raw evidence와
+`requested_crew`, `resolved_crew`, `routing_source`, `catalog_version`가 추가로
+포함될 수 있다. answer가 없거나 형식이 잘못됐거나 반환된 근거와 연결되지 않으면
+evidence가 있어도 실패 결과로 취급한다. status·continue·cancel에는 최초 결과가
+반환한 exact `job_ref`를 사용하며 crew나 depth를 다시 보내지 않는다.
 
-Claude는 Sienna 앱의 Connect 또는 수동 custom connector 절차를 사용한다. ChatGPT는
-공개 Plugin 승인이 끝나기 전 일반 사용자 CTA를 제공하지 않는다. Notion은
-Business/Enterprise, 관리자 허용, Sienna pilot allowlist와 승인된 connector 사용자가
-모두 충족된 경우만 주간 리포트 용도로 Agent별 연결한다. 앱의 Notion CTA는 현재 사용자의
-파일럿 eligibility가 실제로 충족된 경우에만 표시한다.
+완료된 Research 결과는 grounded `answer`와 exact 또는 lower-bound total, 광고주별 inventory,
+count completeness, coverage scope, 대표 광고를 포함할 수 있다. Quick 결과의
+`totals.count_relation=at_least`를 exact로 표현하지 않는다. 미확정 후보가 있으면
+`identity_coverage.complete=false`, `totals.count_complete=false`, coverage warning을
+그대로 보존한다. identity 오류는 반환된 `kind`, `stage=identity_resolution`,
+`reason`, `identity_coverage`, `evidence_impact`, `recovery`로 보고한다.
+`creative_center_top_ads`를 전체 TikTok 광고나 성과 데이터로 해석하지 않는다.
+
+`sienna_job_cancel`은 변경 작업이므로 먼저 `dry_run=true`로 대상을 확인하고 사용자의
+명시적 확인 후 실행한다. status, continue, cancel은 job을 만든 동일한 Hosted 연결에서
+실행한다. 연결 불일치가 반환되면 job을 만든 원래 Hosted 연결을 복구하고 동일한
+`job_ref`로 lifecycle 명령을 다시 실행한다. 새 Ask로 status, continue, cancel을
+대체하지 않는다. 원래 연결을 복구할 수 없으면 취소가 실패했으며 job이 계속 실행될
+수 있음을 사용자에게 알린다.
+
+## 지원하지 않는 작업
+
+- Hosted MCP에는 `sienna_job_answer`가 없다. Hosted Ask가 `needs_input`을 반환하면
+  답을 추측하거나 해당 `job_ref`를 CLI에서 재사용하지 않는다. 같은 질문을 로컬
+  `sienna ask query`로 새로 시작하고, 반환된 질문과 exact `answer_command`를 사용한다.
+- Hosted MCP에는 Rooms와 history 도구가 없다. Rooms, Ask history, provider history가
+  필요하면 로컬 CLI의 해당 명령을 사용한다.
+- 게시, 수정, 삭제, provider 연결·해제는 지원하지 않는다. 지원하지 않는 요청을
+  다른 도구로 우회하지 않는다.

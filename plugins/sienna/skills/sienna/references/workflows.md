@@ -4,11 +4,11 @@ Choose the surface by domain:
 
 - `sienna ask query` — open-ended or multi-provider/multi-domain questions
 - `sienna ads …` — known paid-ads structured reads (Meta, Google, Adjust, creative analysis)
-- `sienna social …` — organic Instagram connect/post/metrics
+- `sienna social …` — organic Instagram/X/LinkedIn connect/post/metrics
 
 ## Natural-Language Ask
 
-For multi-provider or open-ended questions, send the complete question once so independent provider reads can run in parallel:
+For multi-provider or open-ended questions, send the complete question once and interpret the returned evidence:
 
 ```sh
 sienna ask query "최근 7일 Meta와 Google Ads 캠페인 성과를 비교해줘" --json
@@ -21,13 +21,13 @@ sienna ask answer <request_id> "<exact user answer>" --json
 sienna ask wait <request_id> --json
 ```
 
-Omit `--crew` for server auto selection. Use explicit `performance` for broad delivery/efficiency reads, `measurement` for attribution or tracking discrepancies, `creative` for owned analyzed feature/pattern evidence, and `research` for on-demand public competitor ads. Research depth is `quick|standard|deep`, defaults to `standard`, and is not accepted on follow-up lifecycle commands. Quick uses exact source totals when cheap, otherwise observes at most 100 ads per accepted advertiser/source and returns at most 10 representative ads overall. Preserve `count_complete=false` and `count_relation=at_least` as a lower bound. Standard/deep retain exact inventory probes and can return `kind=coverage` at the source cap. The current release has no research period input.
+Leave `--crew` unset unless the user explicitly selects an active crew. Use explicit `performance` for broad delivery/efficiency reads, `measurement` for attribution or tracking discrepancies, `creative` for owned analyzed feature/pattern evidence, and `research` for on-demand public competitor ads. Research depth is `quick|standard|deep`, defaults to `standard`, and is not accepted on follow-up lifecycle commands. Quick uses exact source totals when cheap, otherwise observes at most 100 ads per accepted advertiser/source and returns at most 10 representative ads overall. Preserve `count_complete=false` and `count_relation=at_least` as a lower bound. Standard/deep retain exact inventory probes and can return `kind=coverage` at the source cap. The current release has no research period input.
 
-Let `ask`, `answer`, and `continue` wait for terminal evidence even when they take several minutes. Use `--detach` only for an explicitly requested background handoff. Interpret ordinary `data.evidence` directly; for completed Research, interpret the direct structured `data` totals, count relation, advertiser inventories, coverage scopes, and representative ads. `ask` does not synthesize an `answer`. Read crew provenance when present, and do not send a new crew on `answer` or `continue`; both inherit the root. Use gaps for missing optional or failed provider coverage and warnings for interpretation caveats. Never treat a representative sample count as the total or an `at_least` value as exact. Do not use `sienna ask answer` for free-form follow-ups or start another broad `sienna ask query` merely to repair a known provider path.
+Let `ask`, `answer`, and `continue` wait for terminal output even when they take several minutes. `needs_input` is the successful non-terminal exception: present its exact question and answer contract, stop for the user's answer, then run the exact returned `answer_command`. Do not continue waiting or start a new Ask while input is pending. Use `--detach` only for an explicitly requested background handoff. A completed/partial response must include a grounded `data.answer` using `ask-answer-v1`; present that answer to satisfy the user's request and validate its citations against ordinary `data.evidence` or Research `data.result`. Treat a missing, malformed, or ungrounded answer as failure even when raw rows exist. Read crew provenance when present, and do not send a new crew on `answer` or `continue`. Preserve answer gaps and warnings as interpretation caveats. Never treat a representative sample count as the total or an `at_least` value as exact. Do not use `sienna ask answer` for free-form follow-ups or start another broad `sienna ask query` merely to repair a known provider path.
 
 ## Structured Direct Reads
 
-Use the commands below when the provider path is already known, or for pagination or large raw diagnostics. They bypass AgentCore but still use the same authenticated Query API relay and server-side credentials. Query API or broker outages have no local provider fallback.
+Use the commands below when the provider path is already known, or for pagination or large raw diagnostics. If a command returns an error, follow its exact `recovery`; do not invent a local provider fallback.
 
 ### Meta Ads
 
@@ -51,7 +51,7 @@ sienna ads google query \
   --customer <CUSTOMER_ID> --json
 ```
 
-Discover the customer ID first. Add `segments.date` for daily rows and `--login-customer-id` for an MCC when required. `cost_micros` is one millionth of the account currency. Pass `nextPageToken` back with `--page-token` for another page.
+`ads google accounts` returns GAQL-verified customers. Query every returned customer separately, using its returned `login_customer_id` when present, and preserve its verified name, currency, and time zone. Add `segments.date` for daily rows. `cost_micros` is one millionth of the account currency. Pass `nextPageToken` back with `--page-token` for another page.
 
 ### Adjust
 
@@ -63,7 +63,7 @@ sienna ads adjust report \
   --date-period -7d:-1d --json
 ```
 
-For a named event, resolve the exact event with `sienna ads adjust events`; add `_events` to the returned event id before using it as a report metric. Never use an SDK token or bare event id as a metric. Adjust access is read-only. Use the broker browser flow for normal linking; never ask the user to paste an Adjust token into chat.
+For a named event, resolve the exact event with `sienna ads adjust events`; add `_events` to the returned event id before using it as a report metric. Never use an SDK token or bare event id as a metric. Adjust access is read-only. Use `sienna auth link adjust` for linking; never ask the user to paste an Adjust token into chat.
 
 ### Creative Performance Join
 
@@ -84,13 +84,17 @@ sienna ads creative search "bright product demo, early CTA" --limit 5 --json
 
 A 404 may mean the creative is not analyzed yet or is outside the authenticated account. Use `sienna ads creative list` to inspect `done`, `pending`, `failed`, or `excluded` state.
 
-## Instagram Social Publishing
+## Instagram, X, And LinkedIn Social Publishing
 
 Connect and discover the current opaque account ID:
 
 ```sh
 sienna social account connect instagram --no-browser --persist --json
 sienna social account connect instagram --resume --json
+sienna social account connect x --no-browser --persist --json
+sienna social account connect x --resume --json
+sienna social account connect linkedin --no-browser --persist --json
+sienna social account connect linkedin --resume --json
 sienna social account list --json
 sienna social account status <SOCIAL_ACCOUNT_ID> --json
 ```
@@ -111,7 +115,12 @@ sienna social post create --account <SOCIAL_ACCOUNT_ID> \
   --timezone Asia/Seoul --dry-run --json
 ```
 
-Repeat `--account` for multiple owned Instagram targets. Local media scheduling
+Repeat `--account` for multiple owned targets, including cross-platform posts.
+The server applies the strictest target rule: X accepts 280 weighted characters and up
+to four images or one GIF/video; LinkedIn accepts 3,000 characters and up to 20
+images, one video, or one PDF/PPT/PPTX/DOC/DOCX document. Do not mix image,
+video, and document types. X publishing may incur metered provider API fees.
+Local media scheduling
 is limited to six days because the temporary upload expires; text-only posts or
 long-lived public `--media-url` values can use the normal provider range. Never
 show a presigned URL or its query signature.
@@ -127,11 +136,10 @@ sienna social post retry <POST_ID> --dry-run --json
 sienna social account disconnect <SOCIAL_ACCOUNT_ID> --dry-run --json
 ```
 
-If an account needs reconnection, start the Instagram connect flow and then
-rediscover all opaque IDs. A future direct-platform backend may also require a
-reconnect and may replace account/post IDs.
+If an account needs reconnection, start its matching platform connect flow and
+then rediscover all opaque IDs.
 
-## Instagram Social Metrics
+## Instagram, X, And LinkedIn Social Metrics
 
 Read-only performance metrics for connected accounts and their posts. No
 `--dry-run` exists because nothing mutates and nothing is stored:
@@ -150,8 +158,9 @@ fresh totals. The list range is limited to 366 days and pages of 1–100 items.
 
 Owned posts discovered for connected accounts outside Sienna are included with `"source": "external"`
 (filter lists and metrics with `--source sienna|external|all`). Recent external
-posts from connected accounts can be listed, shown, searched, profiled, and
-joined with metrics. Arbitrary public URLs and competitor-account posts remain
+posts from connected accounts can be listed, shown, and joined with metrics.
+Owned-content search and profiling remain Instagram-only. Arbitrary public URLs
+and competitor-account posts remain
 unsupported. External posts are read-only: `cancel`, `retry`, and their dry-runs
 reject them with a typed `read_only` error — do not retry those calls.
 

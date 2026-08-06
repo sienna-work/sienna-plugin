@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "sienna",
-  "version": "0.12.23",
-  "description": "Manage Instagram publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance through Sienna's parallel Query Agent.",
+  "version": "0.12.28",
+  "description": "Manage Instagram, X, and LinkedIn publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance with Sienna.",
   "author": {
     "name": "Sienna"
   },
@@ -12,6 +12,8 @@
   "keywords": [
     "social-media",
     "instagram",
+    "x",
+    "linkedin",
     "advertising",
     "analytics"
   ],
