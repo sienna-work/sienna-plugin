@@ -9,7 +9,7 @@
       "name": "sienna",
       "source": "./plugins/sienna",
       "description": "Manage Instagram, X, and LinkedIn publishing and analyze Meta Ads, Google Ads, Adjust reports, and creative performance with Sienna.",
-      "version": "0.12.28",
+      "version": "0.12.29",
       "author": {
         "name": "Sienna"
       },

@@ -21,6 +21,9 @@ claim public support or an installation path for a host that is not offered.
 
 `sienna_ask` accepts a complete question and optional `crew`. A Research request
 may also send `research_depth=quick|standard|deep`; omission means `standard`.
+Google public-ad research currently supports `quick` depth, so send
+`research_depth=quick`. Preserve `source_depth_not_approved` for wider depths
+and follow the returned quick recovery.
 Valid crew values are `performance`, `measurement`, `creative`, and `research`.
 `strategy` is unavailable.
 

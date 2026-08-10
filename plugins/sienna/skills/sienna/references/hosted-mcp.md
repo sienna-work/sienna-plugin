@@ -20,6 +20,9 @@ Sienna 앱이 현재 제공하는 호스트 연결만 안내한다. 연결 화�
 
 `sienna_ask`는 완전한 질문과 optional `crew`를 받는다. Research 요청에는 optional
 `research_depth=quick|standard|deep`를 추가할 수 있으며 생략값은 `standard`다.
+Google 공개 광고 research는 현재 `quick` depth를 지원하므로
+`research_depth=quick`을 명시한다. 더 깊은 요청의 `source_depth_not_approved`는 그대로
+전달하고 반환된 quick recovery를 따른다.
 `crew`는 `performance`, `measurement`, `creative`, `research` 중 하나다.
 `strategy`는 사용할 수 없다.
 

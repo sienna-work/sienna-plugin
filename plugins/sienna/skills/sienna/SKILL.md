@@ -74,6 +74,24 @@ Instagram, X, and LinkedIn connections use the same non-blocking pattern:
 Show only the returned `verification_url` to the user completing the flow.
 Never request or display another proof, credential, or secret-bearing value.
 
+### Check feature availability
+
+`auth status --json` returns `data.features.creative_content_analysis` and
+`data.features.competitor_research` as booleans. Check the matching boolean
+before creative/content analysis or competitor research. A false value does
+not affect raw provider data, account connections, general web search, or the
+ability to use Ask and Rooms for otherwise available work.
+
+When a command or tool returns `kind=feature_not_enabled`, preserve its typed
+`feature`, user-facing `message`, and `recovery.action=contact_support`. Explain
+that the feature is unavailable for the current account. Obtain the user's
+confirmation before contacting support or taking another external action, then
+rerun `auth status --json` to verify the result. For
+`kind=feature_temporarily_unavailable` with `recovery.action=retry_later`, do
+not contact support automatically; retry later and recheck status. Do not
+reinterpret either error as authentication failure, network retry, or planner
+repair.
+
 ## Query And Analyze
 
 For structured direct reads, discover accessible accounts before querying them. Choose `sienna ads …` for paid-ads Meta/Google/Adjust/creative reads, `sienna social …` for organic Instagram/X/LinkedIn account/post work, and `sienna ask query` for open-ended or multi-domain questions. Use [references/workflows.md](references/workflows.md) for command patterns. For creative-performance questions, join live performance rows to analyzed features by ad ID rather than treating either source alone as the answer.
@@ -164,10 +182,10 @@ For on-demand competitor-ad research:
 
 ```sh
 "$SIENNA_BIN" ask query "경쟁사들은 요즘 어떤 광고를 하지?" --crew research --depth quick --json
-"$SIENNA_BIN" ask query "A사와 B사의 현재 공개 광고와 오래 게재 중인 광고를 비교해줘" --crew research --depth standard --json
+"$SIENNA_BIN" ask query "A사와 B사의 현재 공개 광고를 빠르게 비교해줘" --crew research --depth quick --json
 ```
 
-`quick` uses a source-reported exact count when available; otherwise it observes at most 100 ads per accepted advertiser/source and returns at most 10 representative ads across the whole result. If the source fills 100 rows, `total_ads` is a lower bound: preserve `count_complete=false` and `count_relation=at_least`, and describe it as `100+` or “at least 100”, never exact. `standard` and `deep` keep exact-inventory probes and may fail with `kind=coverage` at the source cap; follow the returned quick recovery instead of retrying the same exact request. A successful exact zero or one is valid. Meta uses source-reported total/live counts, and TikTok must be labeled `creative_center_top_ads` unless a full archive source proves otherwise. The first release has no caller-set period; do not invent a date-range flag. Preserve `live_status`, coverage scope, and right-censored duration wording. Never call a long-running ad a winner or infer impressions, clicks, spend, conversions, revenue, CTR, or ROAS from public-ad presence.
+Google public-ad Research supports `quick` only. Always pass `--depth quick`; `standard` and `deep` return `source_depth_not_approved`. Preserve that error and follow its exact quick recovery instead of retrying the same depth. A quick result may contain an exact count or a lower bound. Preserve `count_complete=false` and `count_relation=at_least`, and describe `100+` as “at least 100”, never exact. Results return at most 10 representative ads. A successful exact zero or one is valid. The first release has no caller-set period; do not invent a date-range flag. Preserve `live_status`, coverage scope, and right-censored duration wording. Never call a long-running ad a winner or infer impressions, clicks, spend, conversions, revenue, CTR, or ROAS from public-ad presence.
 
 When `totals.analyzed_ads` is positive, inspect `ads[].creative_analysis` and synthesize the requested content insight from those analyzed samples, citing each ad's `evidence_id` or `source_url`. Preserve every `analysis_warnings[]` entry and state when requested representative-media analysis was skipped or failed. Do not answer with URLs alone, do not claim that metadata-only ads were analyzed, and state the analyzed/sample counts when generalizing from the sample.
 
