@@ -164,18 +164,26 @@ Before a command that creates, modifies, publishes, pauses, resumes, cancels, di
 
 Never reuse confirmation from an unrelated earlier action.
 
-X comment commands require Sienna 0.17.9 or newer. Discover the account with
-`social account list`, preview monitor start/stop, and use `social comment list
---account <X_ACCOUNT_ID> --since <RFC3339> --json`. Treat its coverage as
-observed and preserve `comment_id`, `post_id`, `parent_comment_id`, `content`,
-`coverage.mode=observed`, `coverage.requested_since`,
-`coverage.collection_started_at`, `coverage.retained_from`, scope, monitoring
-state, warnings, author/profile image, original link, timestamps, and
+X comment commands require Sienna 0.17.11 or newer. Connecting an X account
+starts comment collection automatically; there is no collection-only start or
+stop command. Discover the account with `"$SIENNA_BIN" social account list --json`,
+inspect it with `"$SIENNA_BIN" social comment status --account <X_ACCOUNT_ID> --json`,
+and preserve the status response's `collection_status`, `collection_started_at`,
+`tracked_post_scope`, `cost_status`, and warnings, including known delivery gaps.
+Use `"$SIENNA_BIN" social comment list --account <X_ACCOUNT_ID> --since <RFC3339> --json`.
+Treat its coverage as observed and preserve `comment_id`, `post_id`,
+`parent_comment_id`, `content`, `coverage.mode=observed`,
+`coverage.requested_since`, `coverage.collection_started_at`,
+`coverage.retained_from`, `coverage.collection_status`, `coverage.scope`, all
+warnings, author/profile image, original link, comment/received/verification
+timestamps (`comment_created_at`, `received_at`, `last_verified_at`), and
 `source_platform=x`; an empty result never proves that X has no comments.
+Collection can create usage costs, so preserve the returned cost status and
+warnings.
 
-Preview replies only with the exact stored `comment_id`: `social comment reply <COMMENT_ID> --account
-<X_ACCOUNT_ID> --content <EXACT_TEXT> --content-origin <user|ai> --dry-run
---json`, show the exact target and text, and obtain confirmation. Codex-generated
+Preview replies only with the exact stored `comment_id`, with `REPLY_TEXT` populated
+through the host's safe input mechanism: `"$SIENNA_BIN" social comment reply <COMMENT_ID> --account <X_ACCOUNT_ID> --content "$REPLY_TEXT" --content-origin <user|ai> --dry-run --json`,
+show the exact target and text, and obtain confirmation. Codex-generated
 or materially rewritten text remains `ai`; actual AI posting is blocked and
 must not be relabeled or routed through another command. For an `unknown` reply
 result, never retry the target and ask the user to inspect the X thread.

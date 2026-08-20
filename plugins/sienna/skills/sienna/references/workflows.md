@@ -143,20 +143,18 @@ management and publishing keep working.
 
 ## X Comment Observation And Reply
 
-These commands require Sienna 0.17.9 or newer. Preview collection changes,
-then run the confirmed operation:
+These commands require Sienna 0.17.11 or newer. Connecting an X account starts
+comment collection automatically. Inspect its read-only state with:
 
 ```sh
-sienna social comment monitor start --account <X_ACCOUNT_ID> --dry-run --json
-sienna social comment monitor status --account <X_ACCOUNT_ID> --json
-sienna social comment monitor stop --account <X_ACCOUNT_ID> --dry-run --json
+sienna social comment status --account <X_ACCOUNT_ID> --json
 ```
 
-Start and stop results separate Sienna monitoring, external collection, tracked
-post scope, and cost status. Preserve `external_mutation_performed`: `true`
-means that this request changed the external account setting, while `false`
-means it did not. Stopping Sienna may not stop shared external collection or
-cost; preserve every warning.
+Status returns `collection_status=collecting|degraded`, collection start time,
+tracked post scope, cost status, and warnings without changing anything.
+Collection can create usage costs. Preserve every warning. To end collection,
+disconnect the X account using the separately confirmed account-disconnect
+flow; there is no collection-only start or stop command.
 
 List only comments observed after the requested time:
 
@@ -169,7 +167,7 @@ sienna social comment list --account <X_ACCOUNT_ID> \
 ```
 
 Preserve `coverage.mode=observed`, `coverage.requested_since`,
-`coverage.collection_started_at`, `coverage.retained_from`, monitoring status,
+`coverage.collection_started_at`, `coverage.retained_from`, collection status,
 scope, warnings, `comment_id`, `post_id`, `parent_comment_id`, content, author
 name and username, profile image URL, original link, timestamps, and
 `source_platform=x`. Empty results

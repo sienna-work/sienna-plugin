@@ -181,18 +181,26 @@ fallback or legacy command.
 
 ## Safety
 
-X comment management requires Sienna 0.17.9 or newer. Discover the X account
-ID, preview monitor start or stop, and treat every list result as an observed
-window rather than complete X coverage. Preserve `comment_id`, `post_id`,
+X comment management requires Sienna 0.17.11 or newer. Connecting an X account
+starts comment collection automatically; there is no collection start or stop
+command. Discover the X account ID, inspect it with
+`sienna social comment status --account <X_ACCOUNT_ID> --json`, and preserve its
+`collection_status`, `collection_started_at`, `tracked_post_scope`, `cost_status`,
+and warnings, including known delivery gaps. Treat every list result as an
+observed window rather than complete X coverage. Preserve `comment_id`, `post_id`,
 `parent_comment_id`, `content`, `coverage.mode=observed`,
 `coverage.requested_since`, `coverage.collection_started_at`,
-`coverage.retained_from`, `coverage.scope`, `monitoring_status`, all warnings,
-author display fields, profile image URL, original link, and
+`coverage.retained_from`, `coverage.scope`, `coverage.collection_status`, all warnings,
+author display fields, profile image URL, original link, `comment_created_at`,
+`received_at`, `last_verified_at`, and
 `source_platform=x`. An empty list means only that no comment was observed in
-that window.
+that window. Collection can create usage costs; preserve the returned cost
+status and warnings.
 
-Before replying, use the exact stored `comment_id` from that list response and run `social comment reply
-... --dry-run`. Present the exact target and text, then obtain explicit user
+Before replying, use the exact stored `comment_id` from that list response, populate
+`REPLY_TEXT` through the host's safe input mechanism, and run
+`sienna social comment reply <COMMENT_ID> --account <X_ACCOUNT_ID> --content "$REPLY_TEXT" --content-origin <user|ai> --dry-run --json`.
+Present the exact target and text, then obtain explicit user
 confirmation. Text generated or materially rewritten by the agent must remain
 `--content-origin ai` even after approval; the first release blocks its actual
 posting and this must not be bypassed through another command. Only text the

@@ -121,7 +121,7 @@ with its documented dry-run flow.
 ```sh
 sienna social account list --json
 sienna social post list --json
-sienna social comment monitor status --account <X_ACCOUNT_ID> --json
+sienna social comment status --account <X_ACCOUNT_ID> --json
 sienna social comment list --account <X_ACCOUNT_ID> --since <RFC3339> --json
 ```
 
