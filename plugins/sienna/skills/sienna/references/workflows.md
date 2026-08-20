@@ -1,145 +1,118 @@
 # Advertising Workflows
 
-Choose the surface by domain:
+## Choose one action
 
-- `sienna ask query` — open-ended or multi-provider/multi-domain questions
-- `sienna ads …` — known paid-ads structured reads (Meta, Google, Adjust, creative analysis)
-- `sienna social …` — organic Instagram/X/LinkedIn connect/post/metrics
+- Account discovery: `sienna ads accounts list|ask`
+- Paid-ad metrics: `sienna ads metrics query|ask`
+- Analyzed owned creatives: `sienna ads creative list|show|search`
+- Public market, brand, and competitor research: `sienna research ask`
+- Cross-surface history and lifecycle: `sienna jobs ...`
+- Organic account, post, and metrics work: `sienna social ...`
+- Persistent multi-agent workspace work: `sienna rooms ...`
 
-## Natural-Language Ask
-
-For multi-provider or open-ended questions, send the complete question once and interpret the returned evidence:
-
-```sh
-sienna ask query "최근 7일 Meta와 Google Ads 캠페인 성과를 비교해줘" --json
-sienna ask query "지난 30일 ROAS 상위 Meta 광고의 공통 Creative 특징을 알려줘" --crew creative --json
-sienna ask query "Meta와 Adjust 전환 집계 차이를 점검해줘" --crew measurement --json
-sienna ask query "경쟁사들은 요즘 어떤 공개 광고를 하지?" --crew research --depth quick --json
-# If status is needs_input, ask the returned question and run answer_command, e.g.:
-sienna ask answer <request_id> "<exact user answer>" --json
-# If the CLI was interrupted, resume the same server job without starting over:
-sienna ask wait <request_id> --json
-```
-
-Leave `--crew` unset unless the user explicitly selects an active crew. Use explicit `performance` for broad delivery/efficiency reads, `measurement` for attribution or tracking discrepancies, `creative` for owned analyzed feature/pattern evidence, and `research` for on-demand public competitor ads. Research depth is `quick|standard|deep`, defaults to `standard`, and is not accepted on follow-up lifecycle commands. Google public-ad research currently supports `quick`, so explicitly pass `--depth quick`; preserve `source_depth_not_approved` and its recovery for wider depths. Quick observes at most 100 ads per accepted advertiser/source and returns at most 10 representative ads overall. Results may contain exact totals or lower-bound counts; preserve `count_complete=false` and `count_relation=at_least` as a lower bound. The current release has no research period input.
-
-Let `ask`, `answer`, and `continue` wait for terminal output even when they take several minutes. `needs_input` is the successful non-terminal exception: present its exact question and answer contract, stop for the user's answer, then run the exact returned `answer_command`. Do not continue waiting or start a new Ask while input is pending. Use `--detach` only for an explicitly requested background handoff. A completed/partial response must include a grounded `data.answer` using `ask-answer-v1`; present that answer to satisfy the user's request and validate its citations against ordinary `data.evidence` or Research `data.result`. Treat a missing, malformed, or ungrounded answer as failure even when raw rows exist. Read crew provenance when present, and do not send a new crew on `answer` or `continue`. Preserve answer gaps and warnings as interpretation caveats. Never treat a representative sample count as the total or an `at_least` value as exact. Do not use `sienna ask answer` for free-form follow-ups or start another broad `sienna ask query` merely to repair a known provider path.
-
-## Structured Direct Reads
-
-Use the commands below when the provider path is already known, or for pagination or large raw diagnostics. If a command returns an error, follow its exact `recovery`; do not invent a local provider fallback.
-
-### Meta Ads
+## Accounts
 
 ```sh
-sienna ads meta accounts --json
-sienna ads meta get /me/adaccounts --param fields=id,name --json
-sienna ads meta get /act_<ID>/insights \
-  --param fields=ad_id,ad_name,spend,impressions,clicks,actions,purchase_roas \
-  --param level=ad --param date_preset=last_30d --json
+sienna ads accounts list --json
+sienna ads accounts list --platform meta --platform google --json
+sienna ads accounts ask "성과 조회에 쓸 계정을 찾아줘" --json
 ```
 
-`sienna ads meta get` is read-only and does not auto-follow `paging`. Never provide `access_token` or `appsecret_proof` as parameters.
+Omit platforms to inspect Meta, Google Ads, and Adjust together. A filtered
+request attempts only the specified platforms. Preserve platform-specific
+successes and errors independently.
 
-### Google Ads
+## Metrics
+
+Use a structured query only when the platform and native arguments are known:
 
 ```sh
-sienna ads google accounts --json
-sienna ads google campaigns --customer <CUSTOMER_ID> --json
-sienna ads google query \
-  "SELECT campaign.id, campaign.name, metrics.impressions, metrics.clicks, metrics.cost_micros FROM campaign WHERE segments.date DURING LAST_7_DAYS" \
-  --customer <CUSTOMER_ID> --json
+sienna ads metrics query --platform meta --account-id act_123 \
+  --arguments-json '{"params":{"fields":"ad_id,spend,impressions","date_preset":"last_7d"}}' --json
+
+sienna ads metrics query --platform google --account-id 1234567890 \
+  --arguments-json '{"query":"SELECT campaign.id, metrics.clicks FROM campaign WHERE segments.date DURING LAST_7_DAYS"}' --json
+
+sienna ads metrics query --platform adjust --account-name "Example App" \
+  --arguments-json '{"dimensions":"app","metrics":"installs","date_period":"-7d:-1d","filters":{}}' --json
 ```
 
-`ads google accounts` returns GAQL-verified customers. Query every returned customer separately, using its returned `login_customer_id` when present, and preserve its verified name, currency, and time zone. Add `segments.date` for daily rows. `cost_micros` is one millionth of the account currency. Pass `nextPageToken` back with `--page-token` for another page.
-
-### Adjust
+Use natural language for interpretation or multiple platforms:
 
 ```sh
-sienna ads adjust events --tokens-mapping --json
-sienna ads adjust report \
-  --dimensions app \
-  --metrics installs,<EVENT_ID>_events \
-  --date-period -7d:-1d --json
+sienna ads metrics ask "지난 7일 Meta와 Google의 지출과 전환을 비교해줘" \
+  --platform meta --platform google --json
 ```
 
-For a named event, resolve the exact event with `sienna ads adjust events`; add `_events` to the returned event id before using it as a report metric. Never use an SDK token or bare event id as a metric. Adjust access is read-only. Use `sienna auth link adjust` for linking; never ask the user to paste an Adjust token into chat.
+Do not mix arguments from different platforms. Never send provider credentials,
+full URLs, HTTP methods, mutations, or non-SELECT GAQL.
 
-### Creative Performance Join
-
-Join live performance to analyzed features by ad ID. Either ask Sienna once, or compose the join with direct commands:
-
-1. Query Meta insights at `level=ad` and rank ads using the requested business metric. Preserve `ad_id`.
-2. Fetch analyzed features with `sienna ads creative show --ad <AD_ID> --json` for representative top and comparison ads.
-3. Join analysis records to performance rows by ad ID. Use the returned ad, ad set, campaign, and account join identifiers to validate scope.
-4. Compare features across groups and distinguish observed patterns from causal claims.
-
-Useful commands:
+## Creative analysis
 
 ```sh
-sienna ads creative list --account act_<ID> --json
-sienna ads creative show --ad <AD_ID> --json
-sienna ads creative search "bright product demo, early CTA" --limit 5 --json
+sienna ads creative list --account act_123 --json
+sienna ads creative show --ad 456 --json
+sienna ads creative search "초반 CTA가 있는 제품 데모" --limit 5 --json
 ```
 
-A 404 may mean the creative is not analyzed yet or is outside the authenticated account. Use `sienna ads creative list` to inspect `done`, `pending`, `failed`, or `excluded` state.
+Join creative observations to live metrics by stable ad ID. Describe patterns
+as observations, not causes, and preserve sample size and analysis warnings.
 
-## Instagram, X, And LinkedIn Social Publishing
-
-Connect and discover the current opaque account ID:
+## Research
 
 ```sh
-sienna social account connect instagram --no-browser --persist --json
-sienna social account connect instagram --resume --json
-sienna social account connect x --no-browser --persist --json
-sienna social account connect x --resume --json
-sienna social account connect linkedin --no-browser --persist --json
-sienna social account connect linkedin --resume --json
-sienna social account list --json
-sienna social account status <SOCIAL_ACCOUNT_ID> --json
+sienna research ask "이 시장의 주요 브랜드와 광고 메시지를 정리해줘" \
+  --scope market --scope brand --depth standard --json
+sienna research ask "A사와 B사의 현재 공개 광고를 빠르게 비교해줘" \
+  --scope competitor --depth quick --json
 ```
 
-Run dry-run first and present the normalized target, mode, schedule, content
-summary, and media metadata for confirmation:
+Scope is optional and repeatable. Keep market context, brand observations, and
+competitor inventories separate in the result. Preserve exact versus lower-bound
+counts, coverage gaps, source URLs, live status, and analyzed sample counts.
+Never infer spend, impressions, clicks, conversions, revenue, CTR, or ROAS from
+public-ad presence.
+
+## Job handling
+
+Action output always includes a Job ID. When CLI waits, it still uses that same
+Job. For a detached or interrupted action:
 
 ```sh
-sienna social post create --account <SOCIAL_ACCOUNT_ID> \
-  --content "출시 소식" --media ./launch.jpg --draft --dry-run --json
-
-sienna social post create --account <SOCIAL_ACCOUNT_ID> \
-  --content "오늘 공개합니다" --publish-now --dry-run --json
-
-sienna social post create --account <SOCIAL_ACCOUNT_ID> \
-  --content "예약 게시" --media ./scheduled.jpg \
-  --scheduled-for 2026-07-15T09:00:00+09:00 \
-  --timezone Asia/Seoul --dry-run --json
+sienna jobs status <JOB_ID> --json
+sienna jobs wait <JOB_ID> --json
 ```
 
-Repeat `--account` for multiple owned targets, including cross-platform posts.
-The server applies the strictest target rule: X accepts 280 weighted characters and up
-to four images or one GIF/video; LinkedIn accepts 3,000 characters and up to 20
-images, one video, or one PDF/PPT/PPTX/DOC/DOCX document. Do not mix image,
-video, and document types. X publishing may incur metered provider API fees.
-Local media scheduling
-is limited to six days because the temporary upload expires; text-only posts or
-long-lived public `--media-url` values can use the normal provider range. Never
-show a presigned URL or its query signature.
-
-After explicit confirmation, remove `--dry-run`. Poll current state and guard
-follow-up mutations the same way:
+If status is `needs_input`, present its question and choices, then:
 
 ```sh
-sienna social post list --json
-sienna social post show <POST_ID> --json
-sienna social post cancel <POST_ID> --dry-run --json
-sienna social post retry <POST_ID> --dry-run --json
-sienna social account disconnect <SOCIAL_ACCOUNT_ID> --dry-run --json
+sienna jobs answer <JOB_ID> "<exact user answer>" --json
 ```
 
-If an account needs reconnection, start its matching platform connect flow and
-then rediscover all opaque IDs.
+There is no continuation command. A terminal `partial` result is usable: report
+successful target data plus failed/skipped targets and gaps.
 
-## Instagram, X, And LinkedIn Social Metrics
+Lifecycle mutations preview by default:
+
+```sh
+sienna jobs cancel <JOB_ID> --json
+sienna jobs cancel <JOB_ID> --execute --json
+sienna jobs delete <JOB_ID> --json
+sienna jobs delete <JOB_ID> --execute --json
+sienna jobs list --trashed --json
+sienna jobs restore <JOB_ID> --json
+sienna jobs purge <JOB_ID> --json
+```
+
+Cancel active work before deletion. Explain that purge is irreversible and
+execute it only after explicit confirmation.
+
+## Social and Rooms
+
+Social and Rooms keep their own command-specific lifecycle. Use the list/show
+commands documented by their help before mutating an opaque ID. For social
+create/cancel/retry/disconnect, perform the command's dry-run first and obtain
+explicit confirmation. External social posts are read-only.
 
 Read-only performance metrics for connected accounts and their posts. No
 `--dry-run` exists because nothing mutates and nothing is stored:
@@ -167,6 +140,55 @@ reject them with a typed `read_only` error — do not retry those calls.
 If metrics fail with a `validation` error mentioning the analytics add-on, the
 provider plan does not include analytics. Report it to the operator; account
 management and publishing keep working.
+
+## X Comment Observation And Reply
+
+These commands require Sienna 0.17.9 or newer. Preview collection changes,
+then run the confirmed operation:
+
+```sh
+sienna social comment monitor start --account <X_ACCOUNT_ID> --dry-run --json
+sienna social comment monitor status --account <X_ACCOUNT_ID> --json
+sienna social comment monitor stop --account <X_ACCOUNT_ID> --dry-run --json
+```
+
+Start and stop results separate Sienna monitoring, external collection, tracked
+post scope, and cost status. Preserve `external_mutation_performed`: `true`
+means that this request changed the external account setting, while `false`
+means it did not. Stopping Sienna may not stop shared external collection or
+cost; preserve every warning.
+
+List only comments observed after the requested time:
+
+```sh
+sienna social comment list --account <X_ACCOUNT_ID> \
+  --since 2026-08-17T00:00:00+09:00 --limit 50 --json
+sienna social comment list --account <X_ACCOUNT_ID> \
+  --since 2026-08-17T00:00:00+09:00 --post <POST_ID> \
+  --cursor <NEXT_CURSOR> --json
+```
+
+Preserve `coverage.mode=observed`, `coverage.requested_since`,
+`coverage.collection_started_at`, `coverage.retained_from`, monitoring status,
+scope, warnings, `comment_id`, `post_id`, `parent_comment_id`, content, author
+name and username, profile image URL, original link, timestamps, and
+`source_platform=x`. Empty results
+mean “no comments were observed,” never “X has no comments.”
+
+Preview one reply with the exact stored comment ID and exact text:
+
+```sh
+sienna social comment reply <COMMENT_ID> --account <X_ACCOUNT_ID> \
+  --content "사용자가 직접 쓴 답변" --content-origin user --dry-run --json
+```
+
+Show the dry-run target, exact content, origin, and policy status, then obtain
+explicit confirmation before removing `--dry-run`. Agent-generated or
+materially rewritten text must use `--content-origin ai`; its actual posting is
+blocked in the first release even after approval. Do not relabel it or use a
+different post command to bypass the block. A succeeded or unknown attempt
+locks that source interaction. For `unknown`, do not retry: ask the user to
+inspect the X thread manually.
 
 ## Mutations
 

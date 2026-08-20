@@ -3,12 +3,12 @@
 Rooms are the local CLI surface for persistent advertising analysis. Use a
 Room when the user needs a reusable Brief, role-specific agent timelines,
 handoff, independent parallel answers, explicit synthesis, Decisions, or
-controlled Memory. Keep `sienna ask` for a one-off question.
+controlled Memory. Keep one-off work under the matching ads or research action.
 
 Rooms require a signed-in local Sienna installation. They work in
 Claude Cowork, Claude Code, and local Codex when this Skill resolves a local
 CLI. Hosted MCP does not expose Rooms tools. Never send a Room/turn/group ID to
-`sienna_ask`, and never use an Ask `request_id` with `sienna rooms wait`.
+`ask`, and never use an Ask `request_id` with `sienna rooms wait`.
 
 ## Safety and authority
 

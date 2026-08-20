@@ -1,65 +1,69 @@
 # Hosted MCP 사용 계약
 
-이 문서는 Sienna 앱에서 제공되는 Hosted AI 연결의 입력과 출력을 설명한다.
-로컬 Plugin 작업에는 Sienna CLI를 사용하고, Hosted 연결에는 아래 도구만 사용한다.
-로컬 CLI의 request ID와 Hosted `job_ref`를 서로 바꾸어 사용하지 않는다.
+이 문서는 Sienna 앱이 제공하는 Hosted AI 연결의 공개 입력과 출력을 설명한다.
+로컬 Plugin 작업에는 CLI를 사용하고, Hosted 연결에는 아래 도구만 사용한다. 모든
+`job_id`는 UUID이며 UI·CLI·MCP에서 같은 Job을 가리킨다.
 
-## 연결 입력
+## 연결과 도구
 
 - URL: `https://mcp.sienna.work/mcp`
-- OAuth 권한: `sienna.analytics.read`, `sienna.jobs.read`,
+- 읽기 권한: `sienna.analytics.read`, `sienna.jobs.read`, 필요한 경우
   `sienna.creative.read`
-- 취소 권한: `sienna.jobs.write`가 추가로 필요할 수 있다.
-- 도구: `sienna_ask`, `sienna_job_status`, `sienna_job_continue`,
-  `sienna_job_cancel`, `sienna_read`
+- lifecycle 변경 권한: `sienna.jobs.write`
+- action: `ads_accounts`, `ads_metrics`, `ads_creatives`, `research`
+- lifecycle: `job_list`, `job_status`, `job_answer`, `job_cancel`, `job_delete`,
+  `job_restore`, `job_purge`
 
-Sienna 앱이 현재 제공하는 호스트 연결만 안내한다. 연결 화면에 없는 호스트나
-설치 경로를 공개 지원이라고 주장하지 않는다.
+Hosted MCP에는 범용 `ask`, 범용 `read`, `job_continue`, `wait`, retry 도구가 없다.
+게시·수정·provider 연결 및 해제도 지원하지 않는다.
 
-## 요청과 결과
+## Action 선택
 
-`sienna_ask`는 완전한 질문과 optional `crew`를 받는다. Research 요청에는 optional
-`research_depth=quick|standard|deep`를 추가할 수 있으며 생략값은 `standard`다.
-Google 공개 광고 research는 현재 `quick` depth를 지원하므로
-`research_depth=quick`을 명시한다. 더 깊은 요청의 `source_depth_not_approved`는 그대로
-전달하고 반환된 quick recovery를 따른다.
-`crew`는 `performance`, `measurement`, `creative`, `research` 중 하나다.
-`strategy`는 사용할 수 없다.
+| 도구 | 공개 계약 |
+| --- | --- |
+| `ads_accounts` | `operation=list|ask`. `platforms` 생략은 Meta·Google·Adjust 전체, 지정은 필터다. `ask`에는 `prompt`가 필수다. |
+| `ads_metrics` | `operation=query|ask`. `query`는 단일 `platform`과 일치하는 provider-native `arguments`가 필수다. `ask`에는 `prompt`가 필수이며 `platforms`와 선택적 account를 받을 수 있다. |
+| `ads_creatives` | `operation=list|show|search`와 그 operation에 맞는 strict `arguments`를 사용한다. 결과는 bounded이며 소유 계정만 조회한다. |
+| `research` | `prompt`가 필수다. `scope`는 optional `market|brand|competitor` 배열, `depth`는 optional `quick|standard`다. scope 생략은 자동 선택이다. |
 
-성공 결과는 `{ok:true,data:{...}}` 형태다. 오류 결과의 `kind`, `retryable`,
-`retry_after_ms`, `message`, `recovery`를 보존하고, `insufficient_scope`가 반환되면
-요청된 추가 권한을 사용자에게 설명한다. provider 원문이나 credential을 요청하거나
-표시하지 않는다.
+모든 action 호출에는 caller가 만든 UUID `idempotency_key`가 필수다. 응답이
+끊기거나 timeout이 발생한 동일 요청 재전송에는 같은 key를 재사용한다. 같은 key로
+다른 입력을 보내면 conflict다. Action은 즉시 같은 `job_id`의 acknowledgement를
+반환할 수 있으므로 결과가 없다고 실패로 판단하지 않는다.
 
-모든 completed 또는 partial Ask 결과에는 `schema_version=ask-answer-v1`,
-일치하는 status, 근거가 연결된 claim/action, crew, answer policy provenance를
-갖는 사용자용 `answer`가 포함된다. 일반 결과에는 raw evidence와
-`requested_crew`, `resolved_crew`, `routing_source`, `catalog_version`가 추가로
-포함될 수 있다. answer가 없거나 형식이 잘못됐거나 반환된 근거와 연결되지 않으면
-evidence가 있어도 실패 결과로 취급한다. status·continue·cancel에는 최초 결과가
-반환한 exact `job_ref`를 사용하며 crew나 depth를 다시 보내지 않는다.
+구조화 입력이 잘못됐거나 계정이 확정되지 않으면 명시적 validation 오류다. 자연어
+요청에서 사용자의 판단이 필요하면 Job이 `needs_input`이 된다. 질문과 bounded
+choices를 그대로 보여주고 사용자가 답한 후 `job_answer`를 호출한다.
 
-완료된 Research 결과는 grounded `answer`와 exact 또는 lower-bound total, 광고주별 inventory,
-count completeness, coverage scope, 대표 광고를 포함할 수 있다. Quick 결과의
-`totals.count_relation=at_least`를 exact로 표현하지 않는다. 미확정 후보가 있으면
-`identity_coverage.complete=false`, `totals.count_complete=false`, coverage warning을
-그대로 보존한다. identity 오류는 반환된 `kind`, `stage=identity_resolution`,
-`reason`, `identity_coverage`, `evidence_impact`, `recovery`로 보고한다.
-`creative_center_top_ads`를 전체 TikTok 광고나 성과 데이터로 해석하지 않는다.
+## Job lifecycle
 
-`sienna_job_cancel`은 변경 작업이므로 먼저 `dry_run=true`로 대상을 확인하고 사용자의
-명시적 확인 후 실행한다. status, continue, cancel은 job을 만든 동일한 Hosted 연결에서
-실행한다. 연결 불일치가 반환되면 job을 만든 원래 Hosted 연결을 복구하고 동일한
-`job_ref`로 lifecycle 명령을 다시 실행한다. 새 Ask로 status, continue, cancel을
-대체하지 않는다. 원래 연결을 복구할 수 없으면 취소가 실패했으며 job이 계속 실행될
-수 있음을 사용자에게 알린다.
+- `job_list`: UI·CLI·MCP에서 생성된 읽을 수 있는 Job을 최신순으로 반환한다.
+  `trashed=true`는 휴지통만 조회한다.
+- `job_status`: 일반 진행 단계 `preparing|retrieving|finalizing`, target 상태,
+  `needs_input`, terminal 결과와 `poll_after_ms`를 반환한다.
+- `job_answer`: `needs_input`에만 사용하며 새 실행 generation을 시작한다.
+- `job_cancel|delete|restore|purge`: `dry_run=true`로 먼저 확인하고 사용자의 명시적
+  확인 후 `dry_run=false`로 실행한다.
 
-## 지원하지 않는 작업
+`job_status`의 `poll_after_ms` 이후에만 다시 조회한다. `pending|running` target은 아직
+결과가 아니며, terminal target은 `succeeded|partial|failed|skipped`다. 일부 target이
+실패해도 성공 target 결과를 보존하고 전체 `partial`을 그대로 설명한다. Terminal
+partial을 이어가는 공개 continuation은 없다.
 
-- Hosted MCP에는 `sienna_job_answer`가 없다. Hosted Ask가 `needs_input`을 반환하면
-  답을 추측하거나 해당 `job_ref`를 CLI에서 재사용하지 않는다. 같은 질문을 로컬
-  `sienna ask query`로 새로 시작하고, 반환된 질문과 exact `answer_command`를 사용한다.
-- Hosted MCP에는 Rooms와 history 도구가 없다. Rooms, Ask history, provider history가
-  필요하면 로컬 CLI의 해당 명령을 사용한다.
-- 게시, 수정, 삭제, provider 연결·해제는 지원하지 않는다. 지원하지 않는 요청을
-  다른 도구로 우회하지 않는다.
+Active 또는 `needs_input` Job은 먼저 cancel한 뒤 delete한다. Delete는 30일 휴지통으로
+이동하고, restore는 만료 전 복구하며, purge는 휴지통의 개별 Job을 영구 삭제한다.
+Job 기록은 삭제 전까지 유지되지만 실행 상태와 입력 대기는 24시간 후 만료된다.
+
+목록·상태·answer는 현재 data scope를 다시 검증한다. 권한이 철회되면 결과를 우회해서
+요청하지 않는다. 취소·삭제·복원·purge는 소유권과 write scope를 검증하며 결과 본문을
+노출하지 않는다.
+
+## 결과 해석과 안전
+
+- 성공 envelope, 오류 `kind`, `message`, `retryable`, `retry_after_ms`, `recovery`를
+  보존한다.
+- Research의 market·brand·competitor 결과, coverage, gaps와 scope별 outcome을
+  구분한다. 공개 광고 존재나 기간을 성과 지표로 해석하지 않는다.
+- Provider 원문이 unavailable이어도 bounded Job 결과를 폐기하지 않는다.
+- credential, 사용자 identity, upstream host, full URL, HTTP method를 입력하거나
+  표시하지 않는다.
