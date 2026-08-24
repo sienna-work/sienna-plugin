@@ -44,8 +44,8 @@ then call `job_answer`.
   per-target states, needs-input data, terminal results, and `poll_after_ms`.
 - Poll only after `poll_after_ms`. There is no MCP wait or continuation tool.
 - Non-terminal target execution is `pending|running`; terminal outcome is
-  `succeeded|partial|failed|skipped`. Preserve successful targets and gaps when
-  the overall Job is terminal `partial`.
+  `succeeded|partial|failed|skipped`. Preserve successful targets and failed
+  target recovery when the overall Job is terminal `partial`.
 - Preview `job_cancel|job_delete|job_restore|job_purge` with `dry_run=true`, show
   the effect, obtain explicit user confirmation, then use `dry_run=false`.
 
@@ -61,7 +61,15 @@ mutations without exposing result contents.
 ## Interpret and protect data
 
 Preserve the success envelope and error `kind`, `message`, `retryable`,
-`retry_after_ms`, and `recovery`. Keep Research market, brand, and competitor
+`retry_after_ms`, and `recovery`. Advertising Ask terminals with
+`schema_version=ask-result-v1` return `results`, target-specific `errors`,
+`warnings`, and `timing`. Preserve each result's account, requested/resolved
+scope, provider-native fields and units, rows, and collection limits. Empty rows
+are successful; when a collection limit is reached, let the user decide whether
+to query again. Do not require Evidence, citations, or a coverage score before
+presenting the data. Older stored Jobs may keep their answer-shaped result.
+
+Keep Research market, brand, and competitor
 results, source coverage, gaps, and scope outcomes distinct. Do not infer ad
 performance from public presence or duration. Raw provider history may be
 unavailable while the bounded Job result remains valid.

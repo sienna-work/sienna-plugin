@@ -1,0 +1,32 @@
+{
+  "name": "sienna",
+  "owner": {
+    "name": "Sienna"
+  },
+  "metadata": {
+    "description": "Sienna tools for advertising analysis and public research.",
+    "version": "0.12.40"
+  },
+  "plugins": [
+    {
+      "name": "sienna",
+      "source": "cursor-plugins/sienna",
+      "description": "Analyze linked advertising accounts, metrics, creatives, and public market research with Sienna's hosted MCP tools.",
+      "version": "0.12.40",
+      "author": {
+        "name": "Sienna"
+      },
+      "homepage": "https://sienna.work",
+      "repository": "https://github.com/sienna-work/sienna-plugin",
+      "license": "MIT",
+      "keywords": [
+        "social-media",
+        "advertising",
+        "analytics",
+        "research",
+        "mcp"
+      ],
+      "category": "productivity"
+    }
+  ]
+}

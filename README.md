@@ -1,6 +1,6 @@
 # Sienna Plugin
 
-Public Claude and Codex Plugin metadata and agent instructions for Sienna.
+Public Claude, Codex, and Cursor Plugin metadata and agent instructions for Sienna.
 
 After installation, follow the bundled Sienna Skill. It documents supported
 commands and inputs, the outputs an agent must interpret, confirmation
@@ -27,6 +27,16 @@ Codex:
 codex plugin marketplace add sienna-work/sienna-plugin
 codex plugin add sienna@sienna
 ```
+
+Cursor:
+
+1. Install Sienna from the Cursor Marketplace after its listing is approved.
+2. During local review, link `cursor-plugins/sienna` under
+   `~/.cursor/plugins/local/sienna`, then reload Cursor.
+3. Connect the installed Sienna MCP server and approve Sienna OAuth.
+
+The Cursor package uses `https://mcp.sienna.work/mcp` and does not install a
+local runtime or contain API keys, access tokens, or OAuth client secrets.
 
 Use the installed Sienna Skill for supported commands, required confirmation,
 structured results, and recovery guidance. Report Plugin problems through the

@@ -8,7 +8,6 @@
 - Public market, brand, and competitor research: `sienna research ask`
 - Cross-surface history and lifecycle: `sienna jobs ...`
 - Organic account, post, and metrics work: `sienna social ...`
-- Persistent multi-agent workspace work: `sienna rooms ...`
 
 ## Accounts
 
@@ -89,8 +88,9 @@ If status is `needs_input`, present its question and choices, then:
 sienna jobs answer <JOB_ID> "<exact user answer>" --json
 ```
 
-There is no continuation command. A terminal `partial` result is usable: report
-successful target data plus failed/skipped targets and gaps.
+There is no continuation command. For `ask-result-v1`, a terminal `partial`
+result is usable: report successful `results` plus target `errors`, recovery,
+warnings, and collection limits. Empty rows remain a valid successful result.
 
 Lifecycle mutations preview by default:
 
@@ -107,10 +107,10 @@ sienna jobs purge <JOB_ID> --json
 Cancel active work before deletion. Explain that purge is irreversible and
 execute it only after explicit confirmation.
 
-## Social and Rooms
+## Social
 
-Social and Rooms keep their own command-specific lifecycle. Use the list/show
-commands documented by their help before mutating an opaque ID. For social
+Social keeps its own command-specific lifecycle. Use the list/show commands
+documented by its help before mutating an opaque ID. For social
 create/cancel/retry/disconnect, perform the command's dry-run first and obtain
 explicit confirmation. External social posts are read-only.
 

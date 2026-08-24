@@ -47,7 +47,7 @@ choices를 그대로 보여주고 사용자가 답한 후 `job_answer`를 호출
 
 `job_status`의 `poll_after_ms` 이후에만 다시 조회한다. `pending|running` target은 아직
 결과가 아니며, terminal target은 `succeeded|partial|failed|skipped`다. 일부 target이
-실패해도 성공 target 결과를 보존하고 전체 `partial`을 그대로 설명한다. Terminal
+실패해도 성공 target 결과와 실패 target의 recovery를 보존하고 전체 `partial`을 그대로 설명한다. Terminal
 partial을 이어가는 공개 continuation은 없다.
 
 Active 또는 `needs_input` Job은 먼저 cancel한 뒤 delete한다. Delete는 30일 휴지통으로
@@ -62,6 +62,12 @@ Job 기록은 삭제 전까지 유지되지만 실행 상태와 입력 대기는
 
 - 성공 envelope, 오류 `kind`, `message`, `retryable`, `retry_after_ms`, `recovery`를
   보존한다.
+- 광고 Ask의 `schema_version=ask-result-v1`은 `results`, target별 `errors`,
+  `warnings`, `timing`을 반환한다. 각 result의 account, 요청·확정 scope,
+  provider-native field·unit, rows와 collection limit를 보존한다. 빈 rows도 성공이다.
+  수집 한계가 있으면 사용자에게 보여주고 추가 조회 여부는 사용자가 판단하게 한다.
+  Evidence, citation 또는 coverage 점수를 데이터 표시 조건으로 요구하지 않는다.
+  기존 저장 Job의 answer 형태 result도 그대로 읽는다.
 - Research의 market·brand·competitor 결과, coverage, gaps와 scope별 outcome을
   구분한다. 공개 광고 존재나 기간을 성과 지표로 해석하지 않는다.
 - Provider 원문이 unavailable이어도 bounded Job 결과를 폐기하지 않는다.

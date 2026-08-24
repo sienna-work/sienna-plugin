@@ -1,0 +1,21 @@
+{
+  "name": "sienna",
+  "version": "0.12.40",
+  "description": "Analyze linked advertising accounts, metrics, creatives, and public market research with Sienna's hosted MCP tools.",
+  "author": {
+    "name": "Sienna"
+  },
+  "homepage": "https://sienna.work",
+  "repository": "https://github.com/sienna-work/sienna-plugin",
+  "license": "MIT",
+  "keywords": [
+    "social-media",
+    "advertising",
+    "analytics",
+    "research",
+    "mcp"
+  ],
+  "logo": "assets/logo.png",
+  "skills": "./skills/",
+  "mcpServers": "./mcp.json"
+}

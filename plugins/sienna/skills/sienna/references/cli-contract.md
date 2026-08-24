@@ -105,18 +105,23 @@ sienna jobs purge <JOB_ID> --execute --json
 - Retry an action after a transport failure with the same client-generated
   idempotency key. Do not create a semantically different request under that
   key. The CLI handles this within one invocation.
-- `partial` is terminal. Use the returned successful results, target gaps, and
-  warnings; there is no public continuation command.
+- Advertising Ask terminals with `schema_version=ask-result-v1` preserve
+  `results`, target-specific `errors`, `warnings`, and `timing`. Each result
+  includes its account, requested/resolved scope, provider-native fields and
+  units, bounded rows, and collection limits. Valid empty rows are successful.
+- `partial` is terminal. Use the returned successful results and failed target
+  recovery; there is no public continuation command. If a collection limit was
+  reached, explain it and let the user decide whether to run another query.
+- Older stored Jobs may retain their answer-shaped result and remain readable.
 - For `feature_not_enabled`, preserve `feature`, `message`, and recovery. For
   `feature_temporarily_unavailable`, retry later instead of relinking auth.
 - Use `sienna <command> --help` before inventing an option or legacy command.
 
-## Social and Rooms
+## Social
 
-Social publishing and Room-specific lifecycle remain independent of common
-Jobs. Rediscover social and Room IDs through their own list commands and never
-substitute them for a Job ID. Preview every supported social or Room mutation
-with its documented dry-run flow.
+Social publishing remains independent of common Jobs. Rediscover social IDs
+through their own list commands and never substitute them for a Job ID.
+Preview every supported social mutation with its documented dry-run flow.
 
 ```sh
 sienna social account list --json
