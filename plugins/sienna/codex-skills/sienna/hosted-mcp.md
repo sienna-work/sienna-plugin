@@ -11,6 +11,11 @@ UUID Job IDs.
   `sienna.creative.read`
 - Lifecycle mutation permission: `sienna.jobs.write`
 - Actions: `ads_accounts`, `ads_metrics`, `ads_creatives`, `research`
+- Watchlist reads: `watchlist_preflight`, `watchlist_list`, `watchlist_show`,
+  `watchlist_runs` — gate on the read permission `sienna.analytics.read`.
+- Watchlist mutations: `watchlist_add`, `watchlist_pause`, `watchlist_resume`,
+  `watchlist_delete` — require `sienna.jobs.write`, the same permission as
+  Job lifecycle mutations.
 - Lifecycle: `job_list`, `job_status`, `job_answer`, `job_cancel`, `job_delete`,
   `job_restore`, `job_purge`
 
@@ -35,6 +40,33 @@ Invalid structured input or unresolved structured account selection is an
 explicit validation error. A natural-language request may instead enter
 `needs_input`; present its exact question and bounded choices, wait for the user,
 then call `job_answer`.
+
+## Watchlist
+
+Watchlist tools return their result immediately and never create a Job.
+Supported URLs are a competitor website, Google Ads Transparency, and Meta Ad
+Library (Meta only after source gate approval). Call `watchlist_preflight`
+first and present the returned candidates. `watchlist_add`, `watchlist_pause`,
+`watchlist_resume`, and `watchlist_delete` default to `execute=false`
+(preview only); call again with `execute=true` only after explicit user
+confirmation — the same preview-then-confirm shape as Job lifecycle's
+`dry_run`, under a different field name. `watchlist_delete` is marked
+destructive.
+
+Set `current_results=true` on `watchlist_show` to also return the stored
+current ad inventory and creative analysis results without starting new
+collection; preserve `observed_at`, `exact|at_least`, `cap_hit`, and coverage
+gaps. `watchlist_runs` is an execution status/summary list, not a diff or
+change-history view.
+
+Typed Watchlist errors: `invalid_watchlist_url` means provide a supported
+`https://` competitor website, Google Ads Transparency, or Meta Ad Library URL
+and call `watchlist_preflight` again; `watchlist_not_found`/`watchlist_deleted`
+mean refresh with `watchlist_list`; `watchlist_preflight_expired`/
+`watchlist_preflight_not_registrable` mean call `watchlist_preflight` again;
+`watchlist_quota_exceeded` means pause or delete another Watchlist first;
+`watchlist_source_unavailable`/`watchlist_storage_unavailable` mean retry
+later rather than re-authenticate.
 
 ## Job lifecycle
 

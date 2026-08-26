@@ -11,6 +11,10 @@
   `sienna.creative.read`
 - lifecycle 변경 권한: `sienna.jobs.write`
 - action: `ads_accounts`, `ads_metrics`, `ads_creatives`, `research`
+- watchlist 읽기: `watchlist_preflight`, `watchlist_list`, `watchlist_show`,
+  `watchlist_runs` — 읽기 권한 `sienna.analytics.read`로 게이팅된다.
+- watchlist 변경: `watchlist_add`, `watchlist_pause`, `watchlist_resume`,
+  `watchlist_delete` — Job lifecycle과 같은 `sienna.jobs.write` 권한이 필요하다.
 - lifecycle: `job_list`, `job_status`, `job_answer`, `job_cancel`, `job_delete`,
   `job_restore`, `job_purge`
 
@@ -34,6 +38,36 @@ Hosted MCP에는 범용 `ask`, 범용 `read`, `job_continue`, `wait`, retry 도�
 구조화 입력이 잘못됐거나 계정이 확정되지 않으면 명시적 validation 오류다. 자연어
 요청에서 사용자의 판단이 필요하면 Job이 `needs_input`이 된다. 질문과 bounded
 choices를 그대로 보여주고 사용자가 답한 후 `job_answer`를 호출한다.
+
+## Watchlist
+
+Watchlist 도구는 즉시 결과를 반환하며 Job을 만들지 않는다. 지원 URL은 경쟁사
+웹사이트, Google Ads Transparency, Meta Ad Library다(Meta는 source gate 승인
+후에만). `watchlist_preflight`로 후보를 먼저 확인한다. `watchlist_add`,
+`watchlist_pause`, `watchlist_resume`, `watchlist_delete`는 `execute=false`
+(기본값)로 미리보기만 하며, 사용자의 명시적 확인 후에만 `execute=true`로
+재호출한다 — Job lifecycle의 `dry_run`과 이름은 다르지만 같은
+preview-then-confirm 구조다. `watchlist_delete`는 destructive로 표시된다.
+
+`watchlist_show`에 `current_results=true`를 주면 저장된 최신 광고 inventory와
+creative 분석 결과를 새 수집 없이 함께 반환한다. `observed_at`,
+`exact|at_least`, `cap_hit`, coverage gap을 보존한다. `watchlist_runs`는 실행
+상태·요약 목록이며 generation 간 diff나 변경 이력이 아니다.
+
+### Watchlist 오류 복구
+
+- `invalid_watchlist_url`: 지원되는 `https://` 경쟁사 웹사이트, Google Ads
+  Transparency, Meta Ad Library URL을 제공하고 `watchlist_preflight`을 다시
+  호출한다.
+- `watchlist_not_found`, `watchlist_deleted`: `watchlist_list`로 상태를
+  새로고침한 뒤 재시도한다.
+- `watchlist_preflight_expired`, `watchlist_preflight_not_registrable`:
+  `watchlist_preflight`을 다시 호출해 새 `preflight_id`/`candidate_token`을
+  받는다.
+- `watchlist_quota_exceeded`: 다른 Watchlist를 `watchlist_pause` 또는
+  `watchlist_delete`로 정리한 뒤 재시도한다.
+- `watchlist_source_unavailable`, `watchlist_storage_unavailable`: 잠시 후
+  재시도한다. 인증 실패로 재해석하지 않는다.
 
 ## Job lifecycle
 

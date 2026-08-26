@@ -116,6 +116,33 @@ Every CLI action returns a top-level `job_id`. Natural-language CLI actions wait
 `--detach` returns the acknowledgement. A structured action may finish inline or
 continue under the same Job ID.
 
+## Track competitor Watchlists
+
+Use `sienna research watch ...` to register a competitor URL for daily
+tracking and to read back what Sienna already collected. Supported URLs are a
+competitor website, a Google Ads Transparency advertiser page, and a Meta Ad
+Library page (Meta only after the account's source gate is approved).
+
+```sh
+"$SIENNA_BIN" research watch preflight "https://example-competitor.com" --json
+"$SIENNA_BIN" research watch add --preflight-id <PREFLIGHT_ID> \
+  --candidate-token <CANDIDATE_TOKEN> --display-name "Example Co" --json
+"$SIENNA_BIN" research watch add --preflight-id <PREFLIGHT_ID> \
+  --candidate-token <CANDIDATE_TOKEN> --display-name "Example Co" --execute --json
+"$SIENNA_BIN" research watch list --json
+"$SIENNA_BIN" research watch show <WATCH_ID> --current-results --json
+"$SIENNA_BIN" research watch runs <WATCH_ID> --json
+"$SIENNA_BIN" research watch pause <WATCH_ID> --execute --json
+```
+
+Run `preflight` first and show the returned registrable candidates. `add`,
+`pause`, `resume`, and `delete` preview by default; present the target and
+effect, obtain explicit confirmation, then repeat with `--execute`. `show
+--current-results` reads the stored latest ad inventory and creative analysis
+without starting new collection, media download, or model execution; preserve
+`observed_at`, `exact|at_least`, `cap_hit`, and coverage gaps. `runs` returns
+execution status and summaries only — it is not a diff or change-history view.
+
 ## Use common Jobs
 
 ```sh

@@ -157,6 +157,50 @@ Social IDs are opaque; rediscover them after reconnection or a stale-ID error.
 - X comment reply `unknown` or a conflict with recovery: inspect the X thread
   manually. Never retry that target because the prior write may have succeeded.
 
+## Watchlist
+
+Watchlist tracking is independent of the Ask/metrics action hierarchy but
+shares the same preview/`--execute` mutation pattern as Jobs, not Social's
+`--dry-run` flag.
+
+```sh
+sienna research watch preflight "https://example-competitor.com" --json
+sienna research watch add --preflight-id <PREFLIGHT_ID> \
+  --candidate-token <CANDIDATE_TOKEN> --display-name "Example Co" --json
+sienna research watch add --preflight-id <PREFLIGHT_ID> \
+  --candidate-token <CANDIDATE_TOKEN> --display-name "Example Co" --execute --json
+sienna research watch list --json
+sienna research watch show <WATCH_ID> --current-results --json
+sienna research watch runs <WATCH_ID> --json
+sienna research watch pause <WATCH_ID> --execute --json
+sienna research watch resume <WATCH_ID> --execute --json
+sienna research watch delete <WATCH_ID> --execute --json
+```
+
+Supported URLs are a competitor website, Google Ads Transparency, and Meta Ad
+Library (Meta only after source gate approval). `preflight` never registers
+anything. `add`, `pause`, `resume`, and `delete` preview by default; show the
+target and effect, obtain explicit confirmation, then repeat with `--execute`.
+`show --current-results` and `runs` read only what Sienna already collected
+and never start new collection, media download, or model execution. `runs` is
+an execution status/summary list, not a diff or change-history view.
+
+### Watchlist recovery
+
+- `invalid_watchlist_url`: provide a supported `https://` competitor website,
+  Google Ads Transparency, or Meta Ad Library URL and rerun `preflight`.
+- `watchlist_not_found` or `watchlist_deleted`: refresh with `sienna research
+  watch list` before retrying.
+- `watchlist_preflight_expired` or `watchlist_preflight_not_registrable`: run
+  `sienna research watch preflight` again for a fresh
+  `preflight_id`/`candidate_token`.
+- `watchlist_quota_exceeded`: pause or delete another Watchlist with `sienna
+  research watch pause|delete`, then retry.
+- `watchlist_source_unavailable` or `watchlist_storage_unavailable`: retry
+  later; do not treat it as an authentication failure.
+- `watchlist_idempotency_conflict`: reuse the same idempotency key only for
+  the identical add request; use a new key for a different one.
+
 ## Safety
 
 - Do not place credentials in argv, environment variables, files, prompts, or

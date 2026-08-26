@@ -19,6 +19,17 @@ or construct direct provider requests.
   signed-in account.
 - `research`: investigate public market, brand, or competitor information with
   `quick|standard` depth.
+- `watchlist_preflight`, `watchlist_add`, `watchlist_list`, `watchlist_show`,
+  `watchlist_runs`: validate a competitor URL (website, Google Ads
+  Transparency, or Meta Ad Library — Meta only after source gate approval),
+  register a Watchlist from a confirmed candidate, and read what Sienna
+  already collected. `watchlist_show` with `current_results=true` also
+  returns the stored latest ad inventory and creative analysis without
+  starting new collection; `watchlist_runs` is a status/summary list, not a
+  diff or change-history view.
+- `watchlist_pause`, `watchlist_resume`, `watchlist_delete`: preview a
+  Watchlist change with `execute=false` and execute it only after explicit
+  user confirmation with `execute=true`. `watchlist_delete` cannot be undone.
 - `job_list`, `job_status`, `job_answer`: inspect and continue the shared Sienna
   Job lifecycle.
 - `job_cancel`, `job_delete`, `job_restore`, `job_purge`: preview a lifecycle

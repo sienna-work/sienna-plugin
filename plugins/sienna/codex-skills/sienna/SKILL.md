@@ -95,6 +95,33 @@ Every CLI action returns a top-level `job_id`. Natural-language CLI actions wait
 use `--detach` only for an immediate acknowledgement. A fast structured action
 may complete inline or continue under the same Job ID.
 
+## Track competitor Watchlists
+
+`sienna research watch ...` registers a competitor URL for daily tracking and
+reads back what Sienna already collected. Supported URLs are a competitor
+website, a Google Ads Transparency advertiser page, and a Meta Ad Library page
+(Meta only after the account's source gate is approved).
+
+```sh
+"$SIENNA_BIN" research watch preflight "https://example-competitor.com" --json
+"$SIENNA_BIN" research watch add --preflight-id <PREFLIGHT_ID> \
+  --candidate-token <CANDIDATE_TOKEN> --display-name "Example Co" --json
+"$SIENNA_BIN" research watch add --preflight-id <PREFLIGHT_ID> \
+  --candidate-token <CANDIDATE_TOKEN> --display-name "Example Co" --execute --json
+"$SIENNA_BIN" research watch list --json
+"$SIENNA_BIN" research watch show <WATCH_ID> --current-results --json
+"$SIENNA_BIN" research watch runs <WATCH_ID> --json
+"$SIENNA_BIN" research watch pause <WATCH_ID> --execute --json
+```
+
+Run `preflight` first and present the returned registrable candidates. `add`,
+`pause`, `resume`, and `delete` preview by default; state the target and
+effect, obtain explicit confirmation, then repeat with `--execute`. `show
+--current-results` reads the stored latest ad inventory and creative analysis
+without starting new collection, media download, or model execution; preserve
+`observed_at`, `exact|at_least`, `cap_hit`, and coverage gaps. `runs` returns
+execution status and summaries only — it is not a diff or change-history view.
+
 ## Common Jobs
 
 ```sh
@@ -170,6 +197,17 @@ Obtain confirmation before contacting support. Preserve
 For a transport failure, retry the same read-only action once; the client must
 reuse its UUID idempotency key for that logical request and never reuse it for
 different input.
+
+Watchlist errors carry their own typed `kind`: `invalid_watchlist_url` means
+the URL is not a supported `https://` competitor website, Google Ads
+Transparency, or Meta Ad Library page — provide one and rerun `preflight`;
+`watchlist_not_found` or `watchlist_deleted` means refresh with `research
+watch list` before retrying;
+`watchlist_preflight_expired` or `watchlist_preflight_not_registrable` means
+run `research watch preflight` again for a fresh `preflight_id`/
+`candidate_token`; `watchlist_quota_exceeded` means pause or delete another
+Watchlist first; `watchlist_source_unavailable` or
+`watchlist_storage_unavailable` means retry later rather than re-authenticate.
 
 ## Guard changes
 

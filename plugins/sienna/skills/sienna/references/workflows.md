@@ -72,6 +72,23 @@ counts, coverage gaps, source URLs, live status, and analyzed sample counts.
 Never infer spend, impressions, clicks, conversions, revenue, CTR, or ROAS from
 public-ad presence.
 
+## Watchlist
+
+```sh
+sienna research watch preflight "https://example-competitor.com" --json
+sienna research watch add --preflight-id <PREFLIGHT_ID> \
+  --candidate-token <CANDIDATE_TOKEN> --display-name "Example Co" --execute --json
+sienna research watch show <WATCH_ID> --current-results --json
+sienna research watch runs <WATCH_ID> --json
+```
+
+Preflight a URL, show the returned candidates, obtain explicit confirmation,
+then `add --execute` the chosen candidate. `pause`, `resume`, and `delete`
+follow the same preview-then-`--execute` pattern. `show --current-results`
+returns the stored latest ad inventory and creative analysis without starting
+new collection. `runs` is an execution status/summary list only — never
+present it as a diff or change history.
+
 ## Job handling
 
 Action output always includes a Job ID. When CLI waits, it still uses that same
