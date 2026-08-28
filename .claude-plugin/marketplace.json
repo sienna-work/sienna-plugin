@@ -9,7 +9,7 @@
       "name": "sienna",
       "source": "./plugins/sienna",
       "description": "Manage advertising accounts, metrics, creatives, public research, common Jobs, and guarded social publishing with Sienna.",
-      "version": "0.12.45",
+      "version": "0.12.46",
       "author": {
         "name": "Sienna"
       },
