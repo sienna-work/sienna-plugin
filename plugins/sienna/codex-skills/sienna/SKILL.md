@@ -91,9 +91,13 @@ Social connections use the same non-blocking pattern and public platform values
   standard.
 - Creative remains dedicated `list|show|search`.
 
-Every CLI action returns a top-level `job_id`. Natural-language CLI actions wait by default;
-use `--detach` only for an immediate acknowledgement. A fast structured action
-may complete inline or continue under the same Job ID.
+Every CLI action returns a top-level `job_id` and an authenticated product
+`web_url`. For Ads, Creative, and Research results, present the returned URL as
+the clickable way to view available ad previews in Sienna; the user may need to
+sign in with the same Sienna account. Never reconstruct a URL from a Job ID or
+guess one from provider fields when `web_url` is absent. Natural-language CLI
+actions wait by default; use `--detach` only for an immediate acknowledgement. A
+fast structured action may complete inline or continue under the same Job ID.
 
 ## Track competitor Watchlists
 
@@ -161,7 +165,15 @@ input expire after 24 hours. Ctrl-C during `jobs wait` does not cancel.
 ## Interpret results
 
 - New advertising Ask results use `schema_version=ask-result-v1`. Preserve
-  `results`, target-specific `errors`, `warnings`, and `timing`.
+  `results`, target-specific `errors`, `warnings`, and `timing`. When the user
+  requested interpretation, the result may also include an additive
+  `answer_contract_version=ask-answer-v1` and `answer` with only the needed
+  summary, grounded observations, or recommendations. Present those elements
+  before the structured results; do not expect every section on every Ask.
+- Answer text may use paragraphs, level-two or level-three headings, lists,
+  emphasis, inline code, HTTPS links, and GFM tables. Preserve useful Markdown;
+  each table is limited to 10 columns and 50 data rows. Do not activate raw
+  HTML, images, embeds, scripts, styles, fenced code, or non-HTTPS links.
 - Show each result's account, requested and resolved period, provider-native
   dimensions and metrics, units, rows, and `collection` limits. Empty rows are
   valid. If `limit_reached=true`, explain the returned scope and let the user

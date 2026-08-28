@@ -11,6 +11,11 @@
   `sienna.creative.read`
 - lifecycle 변경 권한: `sienna.jobs.write`
 - action: `ads_accounts`, `ads_metrics`, `ads_creatives`, `research`
+- Listen 읽기: `listen_posts`, `listen_search`, `listen_stats`,
+  `listen_target_list`, `listen_target_show`
+- Listen monitoring target 변경: `listen_target_preflight`,
+  `listen_target_register`, `listen_target_pause`, `listen_target_resume`,
+  `listen_target_delete` — `sienna.jobs.write` 권한이 필요하다.
 - watchlist 읽기: `watchlist_preflight`, `watchlist_list`, `watchlist_show`,
   `watchlist_runs` — 읽기 권한 `sienna.analytics.read`로 게이팅된다.
 - watchlist 변경: `watchlist_add`, `watchlist_pause`, `watchlist_resume`,
@@ -35,9 +40,42 @@ Hosted MCP에는 범용 `ask`, 범용 `read`, `job_continue`, `wait`, retry 도�
 다른 입력을 보내면 conflict다. Action은 즉시 같은 `job_id`의 acknowledgement를
 반환할 수 있으므로 결과가 없다고 실패로 판단하지 않는다.
 
+Ads·Creative·Research 결과의 `data.web_url`은 사용자가 Sienna에서 실제 광고
+preview를 확인할 수 있는 인증된 경로다. 반환된 URL을 그대로 제시하고 같은 Sienna
+계정 로그인이 필요할 수 있음을 안내한다. Job ID나 provider field로 URL을 조립하거나
+`web_url`을 접근 권한으로 설명하지 않는다.
+
 구조화 입력이 잘못됐거나 계정이 확정되지 않으면 명시적 validation 오류다. 자연어
 요청에서 사용자의 판단이 필요하면 Job이 `needs_input`이 된다. 질문과 bounded
 choices를 그대로 보여주고 사용자가 답한 후 `job_answer`를 호출한다.
+
+## Listen
+
+Listen은 현재 active organization이 소유하는 keyword/community monitoring
+target과 수집 결과를 조회·관리한다. 기존 Watchlist는 사용자가 소유하는 URL/research
+도메인이므로 두 리소스를 서로 대체하거나 같은 것으로 해석하지 않는다.
+
+organization, upstream URL, provider 또는 collector는 도구 입력으로 받지 않는다.
+서버는 매 호출 시 현재 active organization과 membership을 다시 확인한다. organization이
+바뀌거나 membership이 철회되었거나 active organization이 더 이상 유효하지 않으면
+기존 결과나 preview를 우회해 사용하지 말고 새 상태에서 다시 시작한다.
+
+- `listen_posts`, `listen_search`, `listen_stats`는 현재 organization의 bounded 수집
+  결과를 읽는다.
+- `listen_target_preflight`는 keyword/community 후보를 검증하고 등록 가능한
+  `preflight_token`을 반환한다.
+- `listen_target_register`, `listen_target_pause`, `listen_target_resume`,
+  `listen_target_delete`는 `execute=false`, `confirmed=false`로 먼저 preview한다.
+  사용자의 명시적 확인 후 같은 UUID `idempotency_key`를 사용해 `execute=true`,
+  `confirmed=true`로 실행한다. pause/resume/delete는 preview가 반환한 최신
+  `expected_revision`도 전달한다.
+- organization member는 register/pause/resume을 실행할 수 있다. delete 실행은
+  owner만 가능하며 되돌릴 수 없다.
+
+`forbidden`이면 membership·역할·active organization을 새로 확인한다.
+`revision_conflict`이면 target을 다시 조회하고 새 preview와 사용자 확인을 받는다.
+`invalid_preflight`이면 preflight부터 다시 수행한다. `idempotency_conflict`이면 같은
+key에 다른 입력을 재사용하지 말고, 사용자가 확인한 새 작업에 새 UUID를 만든다.
 
 ## Watchlist
 
@@ -99,6 +137,13 @@ Job 기록은 삭제 전까지 유지되지만 실행 상태와 입력 대기는
 - 광고 Ask의 `schema_version=ask-result-v1`은 `results`, target별 `errors`,
   `warnings`, `timing`을 반환한다. 각 result의 account, 요청·확정 scope,
   provider-native field·unit, rows와 collection limit를 보존한다. 빈 rows도 성공이다.
+  해석을 요청한 Ask는 `answer_contract_version=ask-answer-v1`과 선택적 `answer`를
+  함께 반환할 수 있다. 존재하는 요약, 근거 관찰과 추천만 구조화 결과 앞에 보여주고
+  없는 분석 section을 만들어내지 않는다.
+  답변 문자열은 문단, 2·3단계 제목, 목록, 강조, 인라인 코드, HTTPS 링크와 GFM 표를
+  사용할 수 있다. 유용한 형식은 보존하며 표는 각각 최대 10열과 50개 데이터 행이다.
+  raw HTML, 이미지, embed, script, style, fenced code 또는 HTTPS가 아닌 링크를
+  활성화하지 않는다.
   수집 한계가 있으면 사용자에게 보여주고 추가 조회 여부는 사용자가 판단하게 한다.
   Evidence, citation 또는 coverage 점수를 데이터 표시 조건으로 요구하지 않는다.
   기존 저장 Job의 answer 형태 result도 그대로 읽는다.

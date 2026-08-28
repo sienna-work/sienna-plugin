@@ -11,6 +11,11 @@ UUID Job IDs.
   `sienna.creative.read`
 - Lifecycle mutation permission: `sienna.jobs.write`
 - Actions: `ads_accounts`, `ads_metrics`, `ads_creatives`, `research`
+- Listen reads: `listen_posts`, `listen_search`, `listen_stats`,
+  `listen_target_list`, `listen_target_show`
+- Listen monitoring-target mutations: `listen_target_preflight`,
+  `listen_target_register`, `listen_target_pause`, `listen_target_resume`,
+  `listen_target_delete` — require `sienna.jobs.write`.
 - Watchlist reads: `watchlist_preflight`, `watchlist_list`, `watchlist_show`,
   `watchlist_runs` — gate on the read permission `sienna.analytics.read`.
 - Watchlist mutations: `watchlist_add`, `watchlist_pause`, `watchlist_resume`,
@@ -36,10 +41,45 @@ key when retransmitting the same request after a timeout. Reusing it with
 different input is a conflict. An action may return only a Job acknowledgement;
 poll that Job instead of starting another action.
 
+Ads, Creative, and Research results also return `data.web_url`; present that
+value unchanged as the authenticated Sienna page for available ad previews and
+note that the same Sienna account may need to sign in. Do not reconstruct it
+from a Job ID or provider field, and do not describe the URL as authorization.
+
 Invalid structured input or unresolved structured account selection is an
 explicit validation error. A natural-language request may instead enter
 `needs_input`; present its exact question and bounded choices, wait for the user,
 then call `job_answer`.
+
+## Listen
+
+Listen reads and manages collected results and keyword/community monitoring
+targets owned by the current active organization. Keep these resources distinct
+from Watchlist, which remains a user-owned URL/research domain.
+
+Never supply an organization, upstream URL, provider, or collector in tool
+input. The server rechecks the current active organization and membership for
+every call. If the organization changes, membership is revoked, or the active
+organization is no longer valid, do not reuse prior results or previews; restart
+from the current state.
+
+- `listen_posts`, `listen_search`, and `listen_stats` read bounded results for
+  the current organization.
+- `listen_target_preflight` validates a keyword/community candidate and returns
+  a registrable `preflight_token`.
+- Preview `listen_target_register`, `listen_target_pause`,
+  `listen_target_resume`, and `listen_target_delete` with `execute=false` and
+  `confirmed=false`. Execute only after explicit user confirmation by sending
+  `execute=true`, `confirmed=true`, and the same UUID `idempotency_key`.
+  Pause/resume/delete also require the latest previewed `expected_revision`.
+- Organization members may register, pause, or resume. Irreversible deletion is
+  owner-only.
+
+For `forbidden`, refresh membership, role, and active-organization state. For
+`revision_conflict`, fetch the target again and obtain a fresh preview and user
+confirmation. For `invalid_preflight`, start again at preflight. For
+`idempotency_conflict`, never reuse a key with different input; create a new
+UUID only for a newly confirmed operation.
 
 ## Watchlist
 
@@ -98,8 +138,15 @@ Preserve the success envelope and error `kind`, `message`, `retryable`,
 `warnings`, and `timing`. Preserve each result's account, requested/resolved
 scope, provider-native fields and units, rows, and collection limits. Empty rows
 are successful; when a collection limit is reached, let the user decide whether
-to query again. Do not require Evidence, citations, or a coverage score before
+to query again. An Ask that requested interpretation may also return
+`answer_contract_version=ask-answer-v1` and an `answer`; present only its
+available summary, grounded observations, and recommendations before the
+structured results. Do not invent absent analysis sections. Do not require Evidence, citations, or a coverage score before
 presenting the data. Older stored Jobs may keep their answer-shaped result.
+Answer strings may contain paragraphs, level-two or level-three headings,
+lists, emphasis, inline code, HTTPS links, and GFM tables. Preserve useful
+Markdown; each table is limited to 10 columns and 50 data rows. Never activate
+raw HTML, images, embeds, scripts, styles, fenced code, or non-HTTPS links.
 
 Keep Research market, brand, and competitor
 results, source coverage, gaps, and scope outcomes distinct. Do not infer ad

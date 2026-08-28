@@ -37,6 +37,12 @@ sienna research ask "A사와 B사의 현재 광고를 비교해줘" \
   --scope brand --scope competitor --depth quick --json
 ```
 
+Ads, Creative, and Research action JSON includes top-level `job_id` and
+`web_url`. Present the returned `web_url` when the user can benefit from seeing
+available ad previews in Sienna. It is an authenticated locator, not an access
+token; the same Sienna account may need to sign in. Do not build a URL from the
+Job ID or infer one from provider data if the field is absent.
+
 - Omitting `--platform` from account list or a natural-language ads action means
   all supported linked platforms. Repeating it filters the targets.
 - A metrics query requires exactly one `--platform` and provider-native
@@ -109,6 +115,15 @@ sienna jobs purge <JOB_ID> --execute --json
   `results`, target-specific `errors`, `warnings`, and `timing`. Each result
   includes its account, requested/resolved scope, provider-native fields and
   units, bounded rows, and collection limits. Valid empty rows are successful.
+- An Ask that requested interpretation may add
+  `answer_contract_version=ask-answer-v1` and `answer`. Show a present summary,
+  grounded observations, and recommendations before the structured results.
+  Any of those sections may be absent; do not invent missing analysis.
+- Answer strings may contain limited Markdown: paragraphs, level-two or
+  level-three headings, lists, emphasis, inline code, HTTPS links, and GFM
+  tables. Preserve useful formatting. Each table is limited to 10 columns and
+  50 data rows; never activate raw HTML, images, embeds, scripts, styles,
+  fenced code, or non-HTTPS links.
 - `partial` is terminal. Use the returned successful results and failed target
   recovery; there is no public continuation command. If a collection limit was
   reached, explain it and let the user decide whether to run another query.

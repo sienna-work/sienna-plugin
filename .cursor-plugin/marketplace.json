@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Sienna tools for advertising analysis and public research.",
-    "version": "0.12.43"
+    "version": "0.12.44"
   },
   "plugins": [
     {
       "name": "sienna",
       "source": "cursor-plugins/sienna",
       "description": "Analyze linked advertising accounts, metrics, creatives, and public market research with Sienna's hosted MCP tools.",
-      "version": "0.12.43",
+      "version": "0.12.44",
       "author": {
         "name": "Sienna"
       },

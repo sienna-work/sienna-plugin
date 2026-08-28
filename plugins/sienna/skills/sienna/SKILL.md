@@ -112,9 +112,13 @@ Use [references/workflows.md](references/workflows.md) for complete patterns.
   optional `quick|standard` and defaults to standard.
 - Creative list/show/search remain dedicated structured actions.
 
-Every CLI action returns a top-level `job_id`. Natural-language CLI actions wait by default;
-`--detach` returns the acknowledgement. A structured action may finish inline or
-continue under the same Job ID.
+Every CLI action returns a top-level `job_id` and an authenticated product
+`web_url`. For Ads, Creative, and Research results, present the returned URL as
+the clickable way to view available ad previews in Sienna; the user may need to
+sign in with the same Sienna account. Never reconstruct a URL from a Job ID or
+guess one from provider fields when `web_url` is absent. Natural-language CLI
+actions wait by default; `--detach` returns the acknowledgement. A structured
+action may finish inline or continue under the same Job ID.
 
 ## Track competitor Watchlists
 
@@ -184,7 +188,15 @@ input state expires after 24 hours. Ctrl-C during `jobs wait` does not cancel.
 ## Interpret results safely
 
 - New advertising Ask results use `schema_version=ask-result-v1`. Preserve
-  `results`, target-specific `errors`, `warnings`, and `timing`.
+  `results`, target-specific `errors`, `warnings`, and `timing`. When the user
+  requested interpretation, the result may also include an additive
+  `answer_contract_version=ask-answer-v1` and `answer` with only the needed
+  summary, grounded observations, or recommendations. Present those elements
+  before the structured results; do not expect every section on every Ask.
+- Answer text may use paragraphs, level-two or level-three headings, lists,
+  emphasis, inline code, HTTPS links, and GFM tables. Preserve useful Markdown;
+  each table is limited to 10 columns and 50 data rows. Do not activate raw
+  HTML, images, embeds, scripts, styles, fenced code, or non-HTTPS links.
 - For each successful result, show its account, requested and resolved period,
   provider-native dimensions and metrics, units, rows, and `collection` limits.
   Empty rows are a valid result. If `limit_reached=true`, explain the returned
