@@ -105,9 +105,10 @@ If status is `needs_input`, present its question and choices, then:
 sienna jobs answer <JOB_ID> "<exact user answer>" --json
 ```
 
-There is no continuation command. For `ask-result-v1`, a terminal `partial`
-result is usable: report successful `results` plus target `errors`, recovery,
-warnings, and collection limits. Empty rows remain a valid successful result.
+There is no continuation command. An `ask-report-v1` terminal returns a Markdown
+report by default. A terminal `partial` report is usable: show the report plus
+target errors, recovery, and warnings. Use `--include-data` when bounded canonical
+results and collection limits are also needed. Empty rows remain a valid result.
 
 Lifecycle mutations preview by default:
 

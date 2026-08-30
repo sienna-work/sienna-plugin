@@ -164,26 +164,25 @@ input expire after 24 hours. Ctrl-C during `jobs wait` does not cancel.
 
 ## Interpret results
 
-- New advertising Ask results use `schema_version=ask-result-v1`. Preserve
-  `results`, target-specific `errors`, `warnings`, and `timing`. When the user
-  requested interpretation, the result may also include an additive
-  `answer_contract_version=ask-answer-v1` and `answer` with only the needed
-  summary, grounded observations, or recommendations. Present those elements
-  before the structured results; do not expect every section on every Ask.
-- Answer text may use paragraphs, level-two or level-three headings, lists,
-  emphasis, inline code, HTTPS links, and GFM tables. Preserve useful Markdown;
-  each table is limited to 10 columns and 50 data rows. Do not activate raw
-  HTML, images, embeds, scripts, styles, fenced code, or non-HTTPS links.
-- Show each result's account, requested and resolved period, provider-native
-  dimensions and metrics, units, rows, and `collection` limits. Empty rows are
+- Natural-language Ask results use `schema_version=ask-report-v1`. Preserve the
+  `markdown-v1` content, sources, status, target-specific errors, warnings, and
+  timing. Responses are report-only by default. Use `--include-data` only when
+  canonical query data is needed; it adds the same stored data without rerunning
+  the Job or regenerating the report.
+- Report Markdown may use headings, paragraphs, emphasis, lists, blockquotes,
+  inline and fenced code, HTTPS links, and GFM tables. Preserve its order and
+  content; each table is limited to 10 columns and 50 data rows. Do not activate
+  raw HTML, images, embeds, scripts, styles, custom directives, or non-HTTPS links.
+- Included canonical data contains each result's account, requested and resolved
+  period, provider-native dimensions and metrics, units, rows, and `collection` limits. Empty rows are
   valid. If `limit_reached=true`, explain the returned scope and let the user
   decide whether another query is useful.
 - `completed` means every requested target returned a result; `partial` keeps
   successful results and failed target recovery; `failed` means no target
   returned a usable result. Do not invent a completeness score or require
   Evidence, citations, or coverage before presenting data.
-- Existing stored Jobs may use the older answer-shaped result. Present it as
-  returned without rewriting the contract.
+- Do not render legacy `ask-result-v1` as a data-first fallback. Preserve its
+  `legacy_result_unsupported` recovery and start a new Ask if needed.
 - Join creative features to current metrics by stable ad ID and describe
   observed associations, not causes.
 - Keep Research market context, brand observations, and competitor inventories
@@ -204,7 +203,8 @@ confirmation. External owned posts are read-only.
 `data.features.competitor_research`. Preserve `kind=feature_not_enabled`, its
 typed `feature`, user-facing `message`, and `recovery.action=contact_support`.
 Obtain confirmation before contacting support. Preserve
-`kind=feature_temporarily_unavailable` with `recovery.action=retry_later`.
+real service errors and their typed recovery; do not reinterpret them as an
+account feature denial or authentication failure.
 
 For a transport failure, retry the same read-only action once; the client must
 reuse its UUID idempotency key for that logical request and never reuse it for

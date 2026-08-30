@@ -30,10 +30,10 @@ Hosted MCP에는 범용 `ask`, 범용 `read`, `job_continue`, `wait`, retry 도�
 
 | 도구 | 공개 계약 |
 | --- | --- |
-| `ads_accounts` | `operation=list|ask`. `platforms` 생략은 Meta·Google·Adjust 전체, 지정은 필터다. `ask`에는 `prompt`가 필수다. |
-| `ads_metrics` | `operation=query|ask`. `query`는 단일 `platform`과 일치하는 provider-native `arguments`가 필수다. `ask`에는 `prompt`가 필수이며 `platforms`와 선택적 account를 받을 수 있다. |
+| `ads_accounts` | `operation=list|ask`. `platforms` 생략은 Meta·Google·Adjust 전체, 지정은 필터다. `ask`에는 `prompt`가 필수이며 `include_data` 기본값은 `false`다. |
+| `ads_metrics` | `operation=query|ask`. `query`는 단일 `platform`과 일치하는 provider-native `arguments`가 필수다. `ask`에는 `prompt`가 필수이며 `platforms`, 선택적 account와 `include_data=false`를 받을 수 있다. |
 | `ads_creatives` | `operation=list|show|search`와 그 operation에 맞는 strict `arguments`를 사용한다. 결과는 bounded이며 소유 계정만 조회한다. |
-| `research` | `prompt`가 필수다. `scope`는 optional `market|brand|competitor` 배열, `depth`는 optional `quick|standard`다. scope 생략은 자동 선택이다. |
+| `research` | `prompt`가 필수다. `scope`는 optional `market|brand|competitor` 배열, `depth`는 optional `quick|standard`, `include_data` 기본값은 `false`다. scope 생략은 자동 선택이다. |
 
 모든 action 호출에는 caller가 만든 UUID `idempotency_key`가 필수다. 응답이
 끊기거나 timeout이 발생한 동일 요청 재전송에는 같은 key를 재사용한다. 같은 key로
@@ -112,6 +112,7 @@ creative 분석 결과를 새 수집 없이 함께 반환한다. `observed_at`,
 - `job_list`: UI·CLI·MCP에서 생성된 읽을 수 있는 Job을 최신순으로 반환한다.
   `trashed=true`는 휴지통만 조회한다.
 - `job_status`: 일반 진행 단계 `preparing|retrieving|finalizing`, target 상태,
+  기본 report-only 결과와 선택적 `include_data=true` canonical data,
   `needs_input`, terminal 결과와 `poll_after_ms`를 반환한다.
 - `job_answer`: `needs_input`에만 사용하며 새 실행 generation을 시작한다.
 - `job_cancel|delete|restore|purge`: `dry_run=true`로 먼저 확인하고 사용자의 명시적
@@ -134,19 +135,17 @@ Job 기록은 삭제 전까지 유지되지만 실행 상태와 입력 대기는
 
 - 성공 envelope, 오류 `kind`, `message`, `retryable`, `retry_after_ms`, `recovery`를
   보존한다.
-- 광고 Ask의 `schema_version=ask-result-v1`은 `results`, target별 `errors`,
-  `warnings`, `timing`을 반환한다. 각 result의 account, 요청·확정 scope,
-  provider-native field·unit, rows와 collection limit를 보존한다. 빈 rows도 성공이다.
-  해석을 요청한 Ask는 `answer_contract_version=ask-answer-v1`과 선택적 `answer`를
-  함께 반환할 수 있다. 존재하는 요약, 근거 관찰과 추천만 구조화 결과 앞에 보여주고
-  없는 분석 section을 만들어내지 않는다.
-  답변 문자열은 문단, 2·3단계 제목, 목록, 강조, 인라인 코드, HTTPS 링크와 GFM 표를
+- 광고 Ask의 `schema_version=ask-report-v1`은 기본적으로 `markdown-v1` report와
+  sources, target별 `errors`, `warnings`, `timing`을 반환한다. `job_status`와 Ask
+  tool의 `include_data=true`는 같은 Job의 bounded canonical data만 추가한다.
+  report·sources·status·Job identity는 기본 응답과 같아야 한다.
+  report 문자열은 제목, 문단, 목록, 인용, 강조, 인라인·fenced code, HTTPS 링크와 GFM 표를
   사용할 수 있다. 유용한 형식은 보존하며 표는 각각 최대 10열과 50개 데이터 행이다.
-  raw HTML, 이미지, embed, script, style, fenced code 또는 HTTPS가 아닌 링크를
+  raw HTML, 이미지, embed, script, style, custom directive 또는 HTTPS가 아닌 링크를
   활성화하지 않는다.
   수집 한계가 있으면 사용자에게 보여주고 추가 조회 여부는 사용자가 판단하게 한다.
   Evidence, citation 또는 coverage 점수를 데이터 표시 조건으로 요구하지 않는다.
-  기존 저장 Job의 answer 형태 result도 그대로 읽는다.
+  `ask-result-v1`은 data-first fallback 없이 `legacy_result_unsupported` recovery를 따른다.
 - Research의 market·brand·competitor 결과, coverage, gaps와 scope별 outcome을
   구분한다. 공개 광고 존재나 기간을 성과 지표로 해석하지 않는다.
 - Provider 원문이 unavailable이어도 bounded Job 결과를 폐기하지 않는다.

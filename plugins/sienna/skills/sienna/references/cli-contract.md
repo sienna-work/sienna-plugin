@@ -111,25 +111,25 @@ sienna jobs purge <JOB_ID> --execute --json
 - Retry an action after a transport failure with the same client-generated
   idempotency key. Do not create a semantically different request under that
   key. The CLI handles this within one invocation.
-- Advertising Ask terminals with `schema_version=ask-result-v1` preserve
-  `results`, target-specific `errors`, `warnings`, and `timing`. Each result
+- Advertising Ask terminals use `schema_version=ask-report-v1`. The default
+  preserves a `markdown-v1` report and source metadata without canonical data.
+  Add `--include-data` to Ask or `jobs status|wait` only when bounded canonical
+  data is needed. The report, status, Job identity, and sources remain unchanged.
+  Included data preserves target-specific `errors`, `warnings`, and `timing`. Each result
   includes its account, requested/resolved scope, provider-native fields and
   units, bounded rows, and collection limits. Valid empty rows are successful.
-- An Ask that requested interpretation may add
-  `answer_contract_version=ask-answer-v1` and `answer`. Show a present summary,
-  grounded observations, and recommendations before the structured results.
-  Any of those sections may be absent; do not invent missing analysis.
-- Answer strings may contain limited Markdown: paragraphs, level-two or
-  level-three headings, lists, emphasis, inline code, HTTPS links, and GFM
+- Report content may contain Markdown headings, paragraphs, lists, blockquotes,
+  emphasis, inline or fenced code, HTTPS links, and GFM
   tables. Preserve useful formatting. Each table is limited to 10 columns and
   50 data rows; never activate raw HTML, images, embeds, scripts, styles,
-  fenced code, or non-HTTPS links.
+  custom directives, or non-HTTPS links.
 - `partial` is terminal. Use the returned successful results and failed target
   recovery; there is no public continuation command. If a collection limit was
   reached, explain it and let the user decide whether to run another query.
-- Older stored Jobs may retain their answer-shaped result and remain readable.
-- For `feature_not_enabled`, preserve `feature`, `message`, and recovery. For
-  `feature_temporarily_unavailable`, retry later instead of relinking auth.
+- Legacy `ask-result-v1` returns `legacy_result_unsupported`; run a new Ask.
+- For `feature_not_enabled`, preserve `feature`, `message`, and recovery.
+  Preserve real service errors and their retry semantics instead of treating
+  them as an account feature denial or relinking auth.
 - Use `sienna <command> --help` before inventing an option or legacy command.
 
 ## Social

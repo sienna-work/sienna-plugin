@@ -153,6 +153,7 @@ execution status and summaries only — it is not a diff or change-history view.
 "$SIENNA_BIN" jobs list --json
 "$SIENNA_BIN" jobs status <JOB_ID> --json
 "$SIENNA_BIN" jobs wait <JOB_ID> --json
+"$SIENNA_BIN" jobs status <JOB_ID> --include-data --json
 "$SIENNA_BIN" jobs answer <JOB_ID> "<exact user answer>" --json
 ```
 
@@ -187,26 +188,26 @@ input state expires after 24 hours. Ctrl-C during `jobs wait` does not cancel.
 
 ## Interpret results safely
 
-- New advertising Ask results use `schema_version=ask-result-v1`. Preserve
-  `results`, target-specific `errors`, `warnings`, and `timing`. When the user
-  requested interpretation, the result may also include an additive
-  `answer_contract_version=ask-answer-v1` and `answer` with only the needed
-  summary, grounded observations, or recommendations. Present those elements
-  before the structured results; do not expect every section on every Ask.
-- Answer text may use paragraphs, level-two or level-three headings, lists,
-  emphasis, inline code, HTTPS links, and GFM tables. Preserve useful Markdown;
-  each table is limited to 10 columns and 50 data rows. Do not activate raw
-  HTML, images, embeds, scripts, styles, fenced code, or non-HTTPS links.
-- For each successful result, show its account, requested and resolved period,
-  provider-native dimensions and metrics, units, rows, and `collection` limits.
+- Natural-language Ask results use `schema_version=ask-report-v1`. Preserve the
+  `markdown-v1` report content, source metadata, status, target-specific
+  `errors`, `warnings`, and `timing`. The default response is report-only.
+  Request `--include-data` only when canonical query data is needed; it adds
+  the same Job's bounded data without rerunning or regenerating the report.
+- Report Markdown may use headings, paragraphs, emphasis, lists, blockquotes,
+  inline and fenced code, HTTPS links, and GFM tables. Preserve its order and
+  content; each table is limited to 10 columns and 50 data rows. Do not activate
+  raw HTML, images, embeds, scripts, styles, custom directives, or non-HTTPS links.
+- Included canonical data contains each successful result's account, requested
+  and resolved period, provider-native dimensions and metrics, units, rows, and
+  `collection` limits. It is not a promise to expose an upstream provider payload.
   Empty rows are a valid result. If `limit_reached=true`, explain the returned
   scope and let the user decide whether another query is useful.
 - `completed` means every requested target returned a result; `partial` keeps
   both successful results and failed target recovery; `failed` means no target
   returned a usable result. Do not invent a completeness score or require
   Evidence, citations, or coverage before presenting the data.
-- Existing stored Jobs may use the older answer-shaped result. Present those
-  as returned without rewriting their contract.
+- Legacy `ask-result-v1` is not rendered as a data-first fallback. Preserve the
+  returned `legacy_result_unsupported` recovery and start a new Ask if needed.
 - For creative-performance questions, join analyzed features to current metrics
   by stable ad ID. Describe associations rather than causes.
 - Keep Research market context, brand observations, and competitor inventories
@@ -229,8 +230,8 @@ read-only. Never mix a social ID with a common Job ID.
 `data.features.competitor_research`. Preserve `kind=feature_not_enabled`, its
 typed `feature`, user-facing `message`, and `recovery.action=contact_support`.
 Obtain confirmation before contacting support. Preserve
-`kind=feature_temporarily_unavailable` with `recovery.action=retry_later`; do
-not reinterpret either result as an authentication failure.
+real service errors and their typed recovery; do not reinterpret them as an
+account feature denial or authentication failure.
 
 For a transport failure, retry a read-only action once. The client must reuse
 the same UUID idempotency key for the same logical action and must not reuse it

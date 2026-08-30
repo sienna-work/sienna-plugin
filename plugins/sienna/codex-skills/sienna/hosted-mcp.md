@@ -31,10 +31,10 @@ Publishing, editing, and provider connection changes are unsupported.
 
 | Tool | Public contract |
 | --- | --- |
-| `ads_accounts` | `operation=list|ask`. Omit `platforms` for all linked Meta, Google Ads, and Adjust targets; provide an array to filter. Ask requires `prompt`. |
-| `ads_metrics` | `operation=query|ask`. Query requires one `platform` and matching native `arguments`. Ask requires `prompt` and may filter `platforms` or one qualified account. |
+| `ads_accounts` | `operation=list|ask`. Omit `platforms` for all linked Meta, Google Ads, and Adjust targets; provide an array to filter. Ask requires `prompt`; `include_data` defaults to `false`. |
+| `ads_metrics` | `operation=query|ask`. Query requires one `platform` and matching native `arguments`. Ask requires `prompt`, may filter `platforms` or one qualified account, and accepts `include_data=false`. |
 | `ads_creatives` | `operation=list|show|search` with strict matching `arguments`; results are bounded to owned accounts. |
-| `research` | Required `prompt`, optional `scope` array containing `market|brand|competitor`, and optional `depth=quick|standard`. Omit scope for automatic selection. |
+| `research` | Required `prompt`, optional `scope` array containing `market|brand|competitor`, optional `depth=quick|standard`, and `include_data=false`. Omit scope for automatic selection. |
 
 Every action requires a caller-generated UUID `idempotency_key`. Reuse the same
 key when retransmitting the same request after a timeout. Reusing it with
@@ -113,6 +113,7 @@ later rather than re-authenticate.
 - `job_list` returns readable Jobs from UI, CLI, and MCP. Set `trashed=true` to
   list trash.
 - `job_status` returns general `preparing|retrieving|finalizing` progress,
+  a report-only result by default, and optional canonical data with `include_data=true`,
   per-target states, needs-input data, terminal results, and `poll_after_ms`.
 - Poll only after `poll_after_ms`. There is no MCP wait or continuation tool.
 - Non-terminal target execution is `pending|running`; terminal outcome is
@@ -133,20 +134,15 @@ mutations without exposing result contents.
 ## Interpret and protect data
 
 Preserve the success envelope and error `kind`, `message`, `retryable`,
-`retry_after_ms`, and `recovery`. Advertising Ask terminals with
-`schema_version=ask-result-v1` return `results`, target-specific `errors`,
-`warnings`, and `timing`. Preserve each result's account, requested/resolved
-scope, provider-native fields and units, rows, and collection limits. Empty rows
-are successful; when a collection limit is reached, let the user decide whether
-to query again. An Ask that requested interpretation may also return
-`answer_contract_version=ask-answer-v1` and an `answer`; present only its
-available summary, grounded observations, and recommendations before the
-structured results. Do not invent absent analysis sections. Do not require Evidence, citations, or a coverage score before
-presenting the data. Older stored Jobs may keep their answer-shaped result.
-Answer strings may contain paragraphs, level-two or level-three headings,
-lists, emphasis, inline code, HTTPS links, and GFM tables. Preserve useful
-Markdown; each table is limited to 10 columns and 50 data rows. Never activate
-raw HTML, images, embeds, scripts, styles, fenced code, or non-HTTPS links.
+`retry_after_ms`, and `recovery`. Advertising Ask terminals use
+`schema_version=ask-report-v1` and return a `markdown-v1` report plus sources,
+target-specific errors, warnings, and timing by default. `include_data=true` on
+an Ask tool or `job_status` adds only the same Job's bounded canonical data; the
+report, sources, status, and Job identity remain unchanged. Report Markdown may
+contain headings, paragraphs, lists, blockquotes, emphasis, inline or fenced
+code, HTTPS links, and GFM tables. Preserve its order. Never activate raw HTML,
+images, embeds, scripts, styles, custom directives, or non-HTTPS links. Legacy
+`ask-result-v1` follows `legacy_result_unsupported` recovery without a data-first fallback.
 
 Keep Research market, brand, and competitor
 results, source coverage, gaps, and scope outcomes distinct. Do not infer ad
