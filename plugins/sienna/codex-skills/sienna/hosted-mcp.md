@@ -21,7 +21,7 @@ UUID Job IDs.
 - Watchlist mutations: `watchlist_add`, `watchlist_pause`, `watchlist_resume`,
   `watchlist_delete` — require `sienna.jobs.write`, the same permission as
   Job lifecycle mutations.
-- Lifecycle: `job_list`, `job_status`, `job_answer`, `job_cancel`, `job_delete`,
+- Lifecycle: `job_list`, `job_status`, `job_data`, `job_answer`, `job_cancel`, `job_delete`,
   `job_restore`, `job_purge`
 
 There is no generic `ask`, generic `read`, continuation, wait, or retry tool.
@@ -113,8 +113,15 @@ later rather than re-authenticate.
 - `job_list` returns readable Jobs from UI, CLI, and MCP. Set `trashed=true` to
   list trash.
 - `job_status` returns general `preparing|retrieving|finalizing` progress,
-  a report-only result by default, and optional canonical data with `include_data=true`,
-  per-target states, needs-input data, terminal results, and `poll_after_ms`.
+  a report-only result, per-target states, needs-input data, terminal results,
+  and `poll_after_ms`. For a completed Ask whose detailed data is omitted,
+  `detailed_data_hint` tells the client to call `job_data` with the same
+  `job_id`; do not translate this into a CLI command.
+- After an Ask completes, call `job_data` with the same `job_id` only when
+  canonical data is needed. It returns only cited results without repeating the
+  report Markdown. New reports link each uppercase `DATA-XXXXXXXX` `citation_id`
+  to the report footnote; legacy saved reports use their UUID or target/source
+  ID. This does not start a new Ask or regenerate the report.
 - Poll only after `poll_after_ms`. There is no MCP wait or continuation tool.
 - Non-terminal target execution is `pending|running`; terminal outcome is
   `succeeded|partial|failed|skipped`. Preserve successful targets and failed
@@ -137,8 +144,10 @@ Preserve the success envelope and error `kind`, `message`, `retryable`,
 `retry_after_ms`, and `recovery`. Advertising Ask terminals use
 `schema_version=ask-report-v1` and return a `markdown-v1` report plus sources,
 target-specific errors, warnings, and timing by default. `include_data=true` on
-an Ask tool or `job_status` adds only the same Job's bounded canonical data; the
-report, sources, status, and Job identity remain unchanged. Report Markdown may
+an Ask tool adds the same Job's bounded canonical data. `job_data` instead omits
+the report and returns only its cited results. New reports use uppercase
+`DATA-XXXXXXXX` `citation_id`; legacy saved reports use their UUID or
+target/source ID. Report Markdown may
 contain headings, paragraphs, lists, blockquotes, emphasis, inline or fenced
 code, HTTPS links, and GFM tables. Preserve its order. Never activate raw HTML,
 images, embeds, scripts, styles, custom directives, or non-HTTPS links. Legacy

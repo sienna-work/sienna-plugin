@@ -42,8 +42,9 @@ older writable installation with `sienna setup update`.
 ```sh
 "$SIENNA_BIN" auth status --json
 "$SIENNA_BIN" auth login --no-browser --persist --json
-"$SIENNA_BIN" auth link meta --no-browser --persist --json
-"$SIENNA_BIN" auth link google --no-browser --persist --json
+"$SIENNA_BIN" ads provider connect meta --no-browser --persist --json
+"$SIENNA_BIN" ads provider connect google --no-browser --persist --json
+"$SIENNA_BIN" ads provider connect adjust --no-browser --persist --json
 ```
 
 Show only the returned `verification_url`. After the browser step, run the
@@ -132,6 +133,7 @@ execution status and summaries only — it is not a diff or change-history view.
 "$SIENNA_BIN" jobs list --json
 "$SIENNA_BIN" jobs status <JOB_ID> --json
 "$SIENNA_BIN" jobs wait <JOB_ID> --json
+"$SIENNA_BIN" jobs data <JOB_ID> --json
 "$SIENNA_BIN" jobs answer <JOB_ID> "<exact user answer>" --json
 ```
 
@@ -139,6 +141,11 @@ Status shows general `preparing|retrieving|finalizing` progress. Target
 execution is `pending|running`, followed by terminal
 `succeeded|partial|failed|skipped`. Preserve successful target results when
 another target fails. Terminal `partial` is usable and has no continuation.
+A report-only result prints `To view detailed data: sienna jobs data <JOB_ID>`
+after the result page; use that read-only command only when bounded canonical data is needed.
+It returns only cited results without repeating the report Markdown; each result
+in a new report uses uppercase `DATA-XXXXXXXX` `citation_id`, while legacy saved
+reports use their UUID or target/source ID.
 
 Structured ambiguity is validation failure. Natural-language ambiguity may be
 `needs_input`; present the exact question and choices, wait for the user, and
@@ -166,9 +173,13 @@ input expire after 24 hours. Ctrl-C during `jobs wait` does not cancel.
 
 - Natural-language Ask results use `schema_version=ask-report-v1`. Preserve the
   `markdown-v1` content, sources, status, target-specific errors, warnings, and
-  timing. Responses are report-only by default. Use `--include-data` only when
-  canonical query data is needed; it adds the same stored data without rerunning
-  the Job or regenerating the report.
+  timing. Responses are report-only by default. Use `jobs data <JOB_ID>` only
+  when canonical query data is needed; it returns only cited stored data without
+  repeating the report, rerunning the Job, or regenerating the report. In
+  human-readable detailed output, each result is labeled
+  `Citation [^<citation-id>]` and multiple result blocks are separated with a
+  horizontal rule. New reports use the result's uppercase `DATA-XXXXXXXX`
+  `citation_id`; legacy saved reports use their UUID or target/source ID.
 - Report Markdown may use headings, paragraphs, emphasis, lists, blockquotes,
   inline and fenced code, HTTPS links, and GFM tables. Preserve its order and
   content; each table is limited to 10 columns and 50 data rows. Do not activate

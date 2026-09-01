@@ -30,7 +30,7 @@ or construct direct provider requests.
 - `watchlist_pause`, `watchlist_resume`, `watchlist_delete`: preview a
   Watchlist change with `execute=false` and execute it only after explicit
   user confirmation with `execute=true`. `watchlist_delete` cannot be undone.
-- `job_list`, `job_status`, `job_answer`: inspect and continue the shared Sienna
+- `job_list`, `job_status`, `job_data`, `job_answer`: inspect and continue the shared Sienna
   Job lifecycle.
 - `job_cancel`, `job_delete`, `job_restore`, `job_purge`: preview a lifecycle
   change and execute it only after explicit user confirmation.
@@ -53,6 +53,12 @@ optional depth is `quick|standard`.
 
 An action may return a Job acknowledgement before results exist. Use
 `job_status` for that `job_id` instead of starting a duplicate action.
+Ask results are report-only by default. After completion, call `job_status`
+to inspect the report or `job_data` with the same `job_id` when bounded canonical
+data is needed. `job_data` omits the report, returns only cited results, and links
+new reports through uppercase `DATA-XXXXXXXX` `citation_id`; legacy saved reports
+use their UUID or target/source ID. Neither call reruns the action or regenerates
+the report.
 
 ## Follow the Job lifecycle
 

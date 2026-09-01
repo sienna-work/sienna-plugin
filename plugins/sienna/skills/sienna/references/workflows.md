@@ -107,8 +107,11 @@ sienna jobs answer <JOB_ID> "<exact user answer>" --json
 
 There is no continuation command. An `ask-report-v1` terminal returns a Markdown
 report by default. A terminal `partial` report is usable: show the report plus
-target errors, recovery, and warnings. Use `--include-data` when bounded canonical
-results and collection limits are also needed. Empty rows remain a valid result.
+target errors, recovery, and warnings. Use `sienna jobs data <JOB_ID>` when
+bounded canonical results and collection limits are also needed. It omits the
+report and returns only cited results. New reports link uppercase
+`DATA-XXXXXXXX` `citation_id` to the report footnote; legacy saved reports use
+their UUID or target/source ID. Empty rows remain a valid result.
 
 Lifecycle mutations preview by default:
 

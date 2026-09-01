@@ -20,7 +20,7 @@
   `watchlist_runs` — 읽기 권한 `sienna.analytics.read`로 게이팅된다.
 - watchlist 변경: `watchlist_add`, `watchlist_pause`, `watchlist_resume`,
   `watchlist_delete` — Job lifecycle과 같은 `sienna.jobs.write` 권한이 필요하다.
-- lifecycle: `job_list`, `job_status`, `job_answer`, `job_cancel`, `job_delete`,
+- lifecycle: `job_list`, `job_status`, `job_data`, `job_answer`, `job_cancel`, `job_delete`,
   `job_restore`, `job_purge`
 
 Hosted MCP에는 범용 `ask`, 범용 `read`, `job_continue`, `wait`, retry 도구가 없다.
@@ -112,8 +112,13 @@ creative 분석 결과를 새 수집 없이 함께 반환한다. `observed_at`,
 - `job_list`: UI·CLI·MCP에서 생성된 읽을 수 있는 Job을 최신순으로 반환한다.
   `trashed=true`는 휴지통만 조회한다.
 - `job_status`: 일반 진행 단계 `preparing|retrieving|finalizing`, target 상태,
-  기본 report-only 결과와 선택적 `include_data=true` canonical data,
-  `needs_input`, terminal 결과와 `poll_after_ms`를 반환한다.
+  기본 report-only 결과, `needs_input`, terminal 결과와 `poll_after_ms`를 반환한다.
+  완료된 Ask에서 상세 데이터가 빠져 있으면 `detailed_data_hint`가 같은 `job_id`로
+  `job_data`를 호출할 수 있음을 텍스트로 안내한다. CLI 명령으로 바꾸지 않는다.
+- `job_data`: 완료된 Ask에서 실제 인용된 bounded canonical data만 같은 Job에서
+  조회한다. report Markdown은 반복하지 않는다. 새 report는 각 결과의 대문자
+  `DATA-XXXXXXXX` `citation_id`를 report의 `[^<citation_id>]`와 연결하고, 기존 저장
+  report는 UUID 또는 target/source ID를 사용한다.
 - `job_answer`: `needs_input`에만 사용하며 새 실행 generation을 시작한다.
 - `job_cancel|delete|restore|purge`: `dry_run=true`로 먼저 확인하고 사용자의 명시적
   확인 후 `dry_run=false`로 실행한다.
@@ -121,7 +126,9 @@ creative 분석 결과를 새 수집 없이 함께 반환한다. `observed_at`,
 `job_status`의 `poll_after_ms` 이후에만 다시 조회한다. `pending|running` target은 아직
 결과가 아니며, terminal target은 `succeeded|partial|failed|skipped`다. 일부 target이
 실패해도 성공 target 결과와 실패 target의 recovery를 보존하고 전체 `partial`을 그대로 설명한다. Terminal
-partial을 이어가는 공개 continuation은 없다.
+partial을 이어가는 공개 continuation은 없다. 완료된 report의 근거 data가 필요한 경우에만
+같은 `job_id`로 `job_data`를 호출한다. 이 호출은 새 Ask를 시작하지 않으며 report를
+다시 생성하거나 응답에 반복하지 않는다.
 
 Active 또는 `needs_input` Job은 먼저 cancel한 뒤 delete한다. Delete는 30일 휴지통으로
 이동하고, restore는 만료 전 복구하며, purge는 휴지통의 개별 Job을 영구 삭제한다.
@@ -136,9 +143,11 @@ Job 기록은 삭제 전까지 유지되지만 실행 상태와 입력 대기는
 - 성공 envelope, 오류 `kind`, `message`, `retryable`, `retry_after_ms`, `recovery`를
   보존한다.
 - 광고 Ask의 `schema_version=ask-report-v1`은 기본적으로 `markdown-v1` report와
-  sources, target별 `errors`, `warnings`, `timing`을 반환한다. `job_status`와 Ask
-  tool의 `include_data=true`는 같은 Job의 bounded canonical data만 추가한다.
-  report·sources·status·Job identity는 기본 응답과 같아야 한다.
+  sources, target별 `errors`, `warnings`, `timing`을 반환한다. Ask tool의
+  `include_data=true`는 같은 Job의 bounded canonical data를 report에 추가한다.
+  `job_data`는 report를 반복하지 않고 실제 인용된 결과만 반환하며, 결과의 대문자
+  `DATA-XXXXXXXX` `citation_id`가 새 report source와 footnote의 같은 ID에 연결된다.
+  기존 저장 report는 UUID 또는 target/source ID를 사용한다.
   report 문자열은 제목, 문단, 목록, 인용, 강조, 인라인·fenced code, HTTPS 링크와 GFM 표를
   사용할 수 있다. 유용한 형식은 보존하며 표는 각각 최대 10열과 50개 데이터 행이다.
   raw HTML, 이미지, embed, script, style, custom directive 또는 HTTPS가 아닌 링크를

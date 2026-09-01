@@ -113,8 +113,12 @@ sienna jobs purge <JOB_ID> --execute --json
   key. The CLI handles this within one invocation.
 - Advertising Ask terminals use `schema_version=ask-report-v1`. The default
   preserves a `markdown-v1` report and source metadata without canonical data.
-  Add `--include-data` to Ask or `jobs status|wait` only when bounded canonical
-  data is needed. The report, status, Job identity, and sources remain unchanged.
+  Run `jobs data <JOB_ID>` only when bounded canonical data is needed. The
+  response omits the report Markdown and returns only results cited by it.
+  Human-readable detailed output labels each cited result
+  `Citation [^<citation-id>]` and separates multiple result blocks with a
+  horizontal rule. New reports use the result's uppercase `DATA-XXXXXXXX`
+  `citation_id`; legacy saved reports use their UUID or target/source ID.
   Included data preserves target-specific `errors`, `warnings`, and `timing`. Each result
   includes its account, requested/resolved scope, provider-native fields and
   units, bounded rows, and collection limits. Valid empty rows are successful.

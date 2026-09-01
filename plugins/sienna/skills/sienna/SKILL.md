@@ -48,13 +48,14 @@ Job IDs, but social IDs remain a separate opaque domain.
 
 ## Authenticate without blocking
 
-Check status before starting another link:
+Check status before starting another provider connection:
 
 ```sh
 "$SIENNA_BIN" auth status --json
 "$SIENNA_BIN" auth login --no-browser --persist --json
-"$SIENNA_BIN" auth link meta --no-browser --persist --json
-"$SIENNA_BIN" auth link google --no-browser --persist --json
+"$SIENNA_BIN" ads provider connect meta --no-browser --persist --json
+"$SIENNA_BIN" ads provider connect google --no-browser --persist --json
+"$SIENNA_BIN" ads provider connect adjust --no-browser --persist --json
 ```
 
 Show only the returned `verification_url`. After the user completes the browser
@@ -153,7 +154,7 @@ execution status and summaries only — it is not a diff or change-history view.
 "$SIENNA_BIN" jobs list --json
 "$SIENNA_BIN" jobs status <JOB_ID> --json
 "$SIENNA_BIN" jobs wait <JOB_ID> --json
-"$SIENNA_BIN" jobs status <JOB_ID> --include-data --json
+"$SIENNA_BIN" jobs data <JOB_ID> --json
 "$SIENNA_BIN" jobs answer <JOB_ID> "<exact user answer>" --json
 ```
 
@@ -162,7 +163,12 @@ Jobs from UI, CLI, and MCP share this lifecycle. Status exposes general
 `pending|running`, followed by terminal `succeeded|partial|failed|skipped`.
 Preserve successful results when another platform or research scope fails, and
 present terminal `partial` results with their target errors and warnings. There
-is no continuation command.
+is no continuation command. A report-only CLI result prints
+`To view detailed data: sienna jobs data <JOB_ID>` after the result page; use
+that read-only command only when the bounded canonical data is needed. It returns
+only data actually cited by the report, without repeating the report Markdown.
+New reports match each result's uppercase `DATA-XXXXXXXX` `citation_id` to the
+same `[^<citation_id>]`; legacy saved reports use their UUID or target/source ID.
 
 Structured ambiguity is an explicit validation error. Natural-language
 ambiguity may be `needs_input`; show its exact question and bounded choices,
@@ -191,8 +197,12 @@ input state expires after 24 hours. Ctrl-C during `jobs wait` does not cancel.
 - Natural-language Ask results use `schema_version=ask-report-v1`. Preserve the
   `markdown-v1` report content, source metadata, status, target-specific
   `errors`, `warnings`, and `timing`. The default response is report-only.
-  Request `--include-data` only when canonical query data is needed; it adds
-  the same Job's bounded data without rerunning or regenerating the report.
+  Run `jobs data <JOB_ID>` only when canonical query data is needed; it reads
+  only cited bounded data without repeating or regenerating the report.
+  Human-readable detailed output labels each block `Citation [^<citation-id>]`
+  and separates multiple blocks with a horizontal rule. New reports use the
+  result's uppercase `DATA-XXXXXXXX` `citation_id`, while legacy saved reports
+  use their UUID or target/source ID.
 - Report Markdown may use headings, paragraphs, emphasis, lists, blockquotes,
   inline and fenced code, HTTPS links, and GFM tables. Preserve its order and
   content; each table is limited to 10 columns and 50 data rows. Do not activate
