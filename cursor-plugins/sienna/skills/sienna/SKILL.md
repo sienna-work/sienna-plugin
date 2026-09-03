@@ -48,6 +48,12 @@ one key for different input.
 Omit an action's platform filters to include every supported linked target.
 Structured metrics queries require one platform and matching read-only native
 arguments. Natural-language account and metrics questions require a prompt.
+For a Creative-performance question on one Meta account, state the account,
+period, and comparison KPI in the natural-language metrics prompt. The result
+may compare bounded top/bottom ad cohorts using Creative analyses that already
+exist; preserve ad and unique-Creative sample counts, coverage, citations, and
+`partial` recovery. Missing or in-progress analysis is not a completed Creative
+comparison.
 Research requires a prompt; optional scopes are `market|brand|competitor` and
 optional depth is `quick|standard`.
 
@@ -65,7 +71,10 @@ the report.
 Respect `poll_after_ms`; do not poll earlier. Non-terminal target execution is
 `pending|running`. Terminal outcomes are
 `succeeded|partial|failed|skipped`. Preserve successful targets, coverage,
-warnings, and gaps when the overall Job is terminal `partial`.
+warnings, and gaps when the overall Job is terminal `partial`. Do not narrate
+every poll or progress stage. If an acknowledgement is useful, send one short
+sentence, then respond again for `needs_input`, a material error, or the
+terminal result.
 
 A natural-language Job may enter `needs_input`. Present its exact question and
 bounded choices, wait for the user's answer, and send only that answer with
@@ -85,6 +94,10 @@ another action.
 
 ## Interpret results
 
+- Present a natural-language Ask report directly and in full, without
+  summarizing, rewriting, or shortening it. Do not add a preamble, second
+  summary, request or retrieval recap, or status and timing dump. Add material
+  errors or warnings and the returned product link when useful.
 - Preserve the success envelope and error `kind`, `message`, `retryable`,
   `retry_after_ms`, and `recovery`.
 - Preserve provider meaning, currency, time zone, identifiers, completeness,

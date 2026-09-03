@@ -140,7 +140,10 @@ execution status and summaries only — it is not a diff or change-history view.
 Status shows general `preparing|retrieving|finalizing` progress. Target
 execution is `pending|running`, followed by terminal
 `succeeded|partial|failed|skipped`. Preserve successful target results when
-another target fails. Terminal `partial` is usable and has no continuation.
+another target fails. Do not narrate every poll or progress stage. If an
+acknowledgement is useful, send one short sentence, then respond again for
+`needs_input`, a material error, or the terminal result. Terminal `partial` is
+usable and has no continuation.
 A report-only result prints `To view detailed data: sienna jobs data <JOB_ID>`
 after the result page; use that read-only command only when bounded canonical data is needed.
 It returns only cited results without repeating the report Markdown; each result
@@ -173,8 +176,12 @@ input expire after 24 hours. Ctrl-C during `jobs wait` does not cancel.
 
 - Natural-language Ask results use `schema_version=ask-report-v1`. Preserve the
   `markdown-v1` content, sources, status, target-specific errors, warnings, and
-  timing. Responses are report-only by default. Use `jobs data <JOB_ID>` only
-  when canonical query data is needed; it returns only cited stored data without
+  timing. Responses are report-only by default. Present the complete report
+  directly without summarizing, rewriting, or shortening it. Do not add a
+  preamble, second summary, request or retrieval recap, or status and timing
+  dump. Add material errors or warnings and the returned product link when
+  useful. Use `jobs data <JOB_ID>` only when canonical query data is needed; it
+  returns only cited stored data without
   repeating the report, rerunning the Job, or regenerating the report. In
   human-readable detailed output, each result is labeled
   `Citation [^<citation-id>]` and multiple result blocks are separated with a
@@ -194,8 +201,12 @@ input expire after 24 hours. Ctrl-C during `jobs wait` does not cancel.
   Evidence, citations, or coverage before presenting data.
 - Do not render legacy `ask-result-v1` as a data-first fallback. Preserve its
   `legacy_result_unsupported` recovery and start a new Ask if needed.
-- Join creative features to current metrics by stable ad ID and describe
-  observed associations, not causes.
+- For Creative-performance questions on one Meta account, use a natural-language
+  `ads metrics ask` and state the account, period, and comparison KPI. Sienna can
+  compare bounded top/bottom ad cohorts with Creative analyses that already
+  exist. Preserve returned ad and unique-Creative sample counts, coverage,
+  citations, and `partial` recovery. Missing or in-progress Creative analysis is
+  not a completed comparison. Describe observed associations, not causes.
 - Keep Research market context, brand observations, and competitor inventories
   distinct. Do not infer performance from public-ad presence or duration.
 - `source_history_unavailable` does not invalidate the bounded Job result.

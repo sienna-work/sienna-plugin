@@ -161,6 +161,9 @@ execution status and summaries only — it is not a diff or change-history view.
 Jobs from UI, CLI, and MCP share this lifecycle. Status exposes general
 `preparing|retrieving|finalizing` progress. Target execution is
 `pending|running`, followed by terminal `succeeded|partial|failed|skipped`.
+Do not narrate every poll or progress stage. If an acknowledgement is useful,
+send one short sentence, then respond again for `needs_input`, a material error,
+or the terminal result.
 Preserve successful results when another platform or research scope fails, and
 present terminal `partial` results with their target errors and warnings. There
 is no continuation command. A report-only CLI result prints
@@ -197,6 +200,10 @@ input state expires after 24 hours. Ctrl-C during `jobs wait` does not cancel.
 - Natural-language Ask results use `schema_version=ask-report-v1`. Preserve the
   `markdown-v1` report content, source metadata, status, target-specific
   `errors`, `warnings`, and `timing`. The default response is report-only.
+  Present the complete report directly without summarizing, rewriting, or
+  shortening it. Do not add a preamble, second summary, request or retrieval
+  recap, or status and timing dump. Add material errors or warnings and the
+  returned product link when useful.
   Run `jobs data <JOB_ID>` only when canonical query data is needed; it reads
   only cited bounded data without repeating or regenerating the report.
   Human-readable detailed output labels each block `Citation [^<citation-id>]`
@@ -218,8 +225,12 @@ input state expires after 24 hours. Ctrl-C during `jobs wait` does not cancel.
   Evidence, citations, or coverage before presenting the data.
 - Legacy `ask-result-v1` is not rendered as a data-first fallback. Preserve the
   returned `legacy_result_unsupported` recovery and start a new Ask if needed.
-- For creative-performance questions, join analyzed features to current metrics
-  by stable ad ID. Describe associations rather than causes.
+- For Creative-performance questions on one Meta account, use a natural-language
+  `ads metrics ask` and state the account, period, and comparison KPI. Sienna can
+  compare bounded top/bottom ad cohorts with Creative analyses that already
+  exist. Preserve returned ad and unique-Creative sample counts, coverage,
+  citations, and `partial` recovery. Missing or in-progress Creative analysis is
+  not a completed comparison. Describe associations rather than causes.
 - Keep Research market context, brand observations, and competitor inventories
   distinct. Do not infer performance from public-ad presence or duration.
 - `source_history_unavailable` means raw provider history is no longer available;
