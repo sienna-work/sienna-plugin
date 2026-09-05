@@ -105,7 +105,14 @@ If status is `needs_input`, present its question and choices, then:
 sienna jobs answer <JOB_ID> "<exact user answer>" --json
 ```
 
-There is no continuation command. An `ask-report-v1` terminal returns a Markdown
+For a new question that should retain a completed or partial Ask report's
+context, run:
+
+```sh
+sienna jobs follow-up <JOB_ID> "<follow-up question>" --json
+```
+
+This starts a new Job rather than resuming the prior execution. An `ask-report-v1` terminal returns a Markdown
 report by default. A terminal `partial` report is usable: show the report plus
 target errors, recovery, and warnings. Use `sienna jobs data <JOB_ID>` when
 bounded canonical results and collection limits are also needed. It omits the

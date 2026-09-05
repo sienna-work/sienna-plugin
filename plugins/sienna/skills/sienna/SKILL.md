@@ -156,6 +156,7 @@ execution status and summaries only — it is not a diff or change-history view.
 "$SIENNA_BIN" jobs wait <JOB_ID> --json
 "$SIENNA_BIN" jobs data <JOB_ID> --json
 "$SIENNA_BIN" jobs answer <JOB_ID> "<exact user answer>" --json
+"$SIENNA_BIN" jobs follow-up <JOB_ID> "<follow-up question>" --json
 ```
 
 Jobs from UI, CLI, and MCP share this lifecycle. Status exposes general
@@ -166,7 +167,8 @@ send one short sentence, then respond again for `needs_input`, a material error,
 or the terminal result.
 Preserve successful results when another platform or research scope fails, and
 present terminal `partial` results with their target errors and warnings. There
-is no continuation command. A report-only CLI result prints
+is no in-place execution continuation. For a new question that should retain a
+completed or partial Ask report's context, use `jobs follow-up`. A report-only CLI result prints
 `To view detailed data: sienna jobs data <JOB_ID>` after the result page; use
 that read-only command only when the bounded canonical data is needed. It returns
 only data actually cited by the report, without repeating the report Markdown.

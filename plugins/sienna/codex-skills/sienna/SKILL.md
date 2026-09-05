@@ -135,6 +135,7 @@ execution status and summaries only — it is not a diff or change-history view.
 "$SIENNA_BIN" jobs wait <JOB_ID> --json
 "$SIENNA_BIN" jobs data <JOB_ID> --json
 "$SIENNA_BIN" jobs answer <JOB_ID> "<exact user answer>" --json
+"$SIENNA_BIN" jobs follow-up <JOB_ID> "<follow-up question>" --json
 ```
 
 Status shows general `preparing|retrieving|finalizing` progress. Target
@@ -143,7 +144,8 @@ execution is `pending|running`, followed by terminal
 another target fails. Do not narrate every poll or progress stage. If an
 acknowledgement is useful, send one short sentence, then respond again for
 `needs_input`, a material error, or the terminal result. Terminal `partial` is
-usable and has no continuation.
+usable and has no in-place execution continuation. Use `jobs follow-up` to ask
+a new question while retaining a completed or partial Ask report's context.
 A report-only result prints `To view detailed data: sienna jobs data <JOB_ID>`
 after the result page; use that read-only command only when bounded canonical data is needed.
 It returns only cited results without repeating the report Markdown; each result

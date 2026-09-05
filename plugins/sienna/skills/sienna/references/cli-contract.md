@@ -128,8 +128,11 @@ sienna jobs purge <JOB_ID> --execute --json
   50 data rows; never activate raw HTML, images, embeds, scripts, styles,
   custom directives, or non-HTTPS links.
 - `partial` is terminal. Use the returned successful results and failed target
-  recovery; there is no public continuation command. If a collection limit was
-  reached, explain it and let the user decide whether to run another query.
+  recovery; it does not resume the same execution. Use
+  `jobs follow-up <JOB_ID> "<follow-up question>"` for a new question that
+  retains the completed or partial Ask report's bounded conversation context.
+  If a collection limit was reached, explain it and let the user decide whether
+  to run another query.
 - Legacy `ask-result-v1` returns `legacy_result_unsupported`; run a new Ask.
 - For `feature_not_enabled`, preserve `feature`, `message`, and recovery.
   Preserve real service errors and their retry semantics instead of treating
