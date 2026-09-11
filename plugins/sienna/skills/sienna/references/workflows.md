@@ -120,6 +120,20 @@ report and returns only cited results. New reports link uppercase
 `DATA-XXXXXXXX` `citation_id` to the report footnote; legacy saved reports use
 their UUID or target/source ID. Empty rows remain a valid result.
 
+When the calling agent should perform all interpretation itself, request a
+Metrics Ask without report composition:
+
+```sh
+sienna ads metrics ask "최근 7일 Meta 성과를 상세히 조회해줘" \
+  --platform meta --data-only
+```
+
+The foreground response carries a top-level `job_id` and canonical
+`ask-result-v1` under `data`; `--data-only` automatically selects JSON, while an
+explicit `--json` remains valid. Add `--detach` only for the standard immediate
+Job acknowledgement, then use `jobs status|wait`. Do not combine `--data-only`
+with `--include-data`.
+
 Lifecycle mutations preview by default:
 
 ```sh

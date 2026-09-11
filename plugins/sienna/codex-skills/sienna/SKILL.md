@@ -53,13 +53,14 @@ poll proof, token, or secret-bearing URL.
 
 Handle sign-in storage errors by exact JSON `error.kind`:
 
-- `credential_repair_required`: ask the user to approve one repair in Sienna
-  Settings > Security.
 - `credential_store_unavailable`: ask the user to unlock the Mac and retry,
-  then install the latest supported macOS update if needed. Do not repeat
-  repair; if it remains unavailable, ask the user to sign in again in Sienna.
+  then install the latest supported macOS update if needed. If it remains
+  unavailable, ask the user to sign in again in Sienna.
 - `credential_store_misconfigured`: ask the user to update or reinstall the
-  latest official Sienna app. Do not change permissions or retry repair.
+  latest official Sienna app. Do not change permissions.
+
+`authenticated: false` without an error is not a storage problem; run
+`auth login` as described above.
 
 Rerun `auth status --json` after the user completes the recovery step.
 
@@ -75,6 +76,8 @@ Social connections use the same non-blocking pattern and public platform values
   --arguments-json '{"query":"SELECT campaign.id FROM campaign"}' --json
 "$SIENNA_BIN" ads metrics ask "지난 7일 Meta와 Google 성과를 비교해줘" \
   --platform meta --platform google --json
+"$SIENNA_BIN" ads metrics ask "최근 7일 Meta 성과를 상세히 조회해줘" \
+  --platform meta --data-only
 "$SIENNA_BIN" ads creative search "제품 데모와 초반 CTA" --limit 5 --json
 "$SIENNA_BIN" research ask "A사와 B사의 현재 공개 광고를 비교해줘" \
   --scope brand --scope competitor --depth quick --json
@@ -87,6 +90,11 @@ Social connections use the same non-blocking pattern and public platform values
   single candidate.
 - Natural-language ads questions live under their matching action's `ask`
   subcommand.
+- Metrics Ask returns a report by default. Use `--include-data` for the report
+  plus canonical data. Use `--data-only` when you need canonical data without a
+  report and will perform the analysis yourself. It automatically selects JSON
+  output; an explicit `--json` is allowed but unnecessary. `--data-only`
+  conflicts with `--include-data`.
 - Research requires a prompt. Its optional repeated scope is
   `market|brand|competitor`; optional depth is `quick|standard` and defaults to
   standard.
@@ -189,6 +197,10 @@ input expire after 24 hours. Ctrl-C during `jobs wait` does not cancel.
   `Citation [^<citation-id>]` and multiple result blocks are separated with a
   horizontal rule. New reports use the result's uppercase `DATA-XXXXXXXX`
   `citation_id`; legacy saved reports use their UUID or target/source ID.
+- An intentional `ads metrics ask --data-only` foreground result uses
+  `{"ok":true,"job_id":"...","data":<ask-result-v1>}`. Interpret its bounded
+  canonical results directly. With `--detach`, the immediate response is the
+  normal Job acknowledgement; read the same Job with `jobs status|wait`.
 - Report Markdown may use headings, paragraphs, emphasis, lists, blockquotes,
   inline and fenced code, HTTPS links, and GFM tables. Preserve its order and
   content; each table is limited to 10 columns and 50 data rows. Do not activate
@@ -197,12 +209,17 @@ input expire after 24 hours. Ctrl-C during `jobs wait` does not cancel.
   period, provider-native dimensions and metrics, units, rows, and `collection` limits. Empty rows are
   valid. If `limit_reached=true`, explain the returned scope and let the user
   decide whether another query is useful.
+- Metrics results may include `target.scope.requested.omissions` listing each
+  excluded field and its `ambiguous`, `unsupported`, or `explicit_scope` reason.
+  Preserve these omissions and warnings; an excluded metric is not zero.
+  `collection.limit_reached=false` does not mean unrequested metrics were fetched.
+  Keep action-type outcomes separate rather than summing them as purchases.
 - `completed` means every requested target returned a result; `partial` keeps
   successful results and failed target recovery; `failed` means no target
   returned a usable result. Do not invent a completeness score or require
   Evidence, citations, or coverage before presenting data.
-- Do not render legacy `ask-result-v1` as a data-first fallback. Preserve its
-  `legacy_result_unsupported` recovery and start a new Ask if needed.
+- An `ask-result-v1` without an explicit Metrics data-only Job remains legacy.
+  Preserve its `legacy_result_unsupported` recovery and start a new Ask if needed.
 - For Creative-performance questions on one Meta account, use a natural-language
   `ads metrics ask` and state the account, period, and comparison KPI. Sienna can
   compare bounded top/bottom ad cohorts with Creative analyses that already

@@ -28,6 +28,8 @@ sienna ads metrics query --platform google \
   --arguments-json '{"query":"SELECT campaign.id FROM campaign"}' --json
 sienna ads metrics ask "최근 7일 Meta와 Google 성과를 비교해줘" \
   --platform meta --platform google --json
+sienna ads metrics ask "최근 7일 Meta 성과를 상세히 조회해줘" \
+  --platform meta --data-only
 
 sienna ads creative list --account act_123 --json
 sienna ads creative show --ad 456 --json
@@ -52,6 +54,10 @@ Job ID or infer one from provider data if the field is absent.
   candidates produce a typed validation error for structured queries.
 - Natural-language account ambiguity may produce `needs_input` with bounded
   choices. Present the question and do not choose for the user.
+- Metrics Ask is report-first. `--include-data` adds canonical data to that
+  report. `--data-only` omits the report, automatically selects JSON output,
+  and returns canonical data for the caller to interpret. An explicit `--json`
+  is allowed but unnecessary. It cannot be combined with `--include-data`.
 - Research accepts repeated `market|brand|competitor` scopes. Omit scope for
   automatic selection. Depth is optional `quick|standard` and defaults to
   `standard`; `deep` is unsupported.
@@ -122,6 +128,11 @@ sienna jobs purge <JOB_ID> --execute --json
   Included data preserves target-specific `errors`, `warnings`, and `timing`. Each result
   includes its account, requested/resolved scope, provider-native fields and
   units, bounded rows, and collection limits. Valid empty rows are successful.
+- A foreground `ads metrics ask --data-only` success is
+  `{"ok":true,"job_id":"...","data":<ask-result-v1>}`. The explicit
+  `ask-result-v1` contains bounded canonical results, target errors, warnings,
+  and timing without report Markdown. With `--detach`, the immediate response
+  is the standard Job acknowledgement; use `jobs status|wait` with its Job ID.
 - Report content may contain Markdown headings, paragraphs, lists, blockquotes,
   emphasis, inline or fenced code, HTTPS links, and GFM
   tables. Preserve useful formatting. Each table is limited to 10 columns and
@@ -133,7 +144,8 @@ sienna jobs purge <JOB_ID> --execute --json
   retains the completed or partial Ask report's bounded conversation context.
   If a collection limit was reached, explain it and let the user decide whether
   to run another query.
-- Legacy `ask-result-v1` returns `legacy_result_unsupported`; run a new Ask.
+- An `ask-result-v1` not marked by an explicit Metrics data-only Job returns
+  `legacy_result_unsupported`; run a new Ask.
 - For `feature_not_enabled`, preserve `feature`, `message`, and recovery.
   Preserve real service errors and their retry semantics instead of treating
   them as an account feature denial or relinking auth.
