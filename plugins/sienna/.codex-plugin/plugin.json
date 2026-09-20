@@ -1,11 +1,11 @@
 {
   "name": "sienna",
-  "version": "0.12.52",
+  "version": "0.12.53",
   "description": "Manage advertising accounts, metrics, creatives, public research, common Jobs, and guarded social publishing with Sienna.",
   "author": {
     "name": "Sienna"
   },
-  "homepage": "https://sienna.work",
+  "homepage": "https://siennabot.ai",
   "repository": "https://github.com/sienna-work/sienna-plugin",
   "license": "MIT",
   "keywords": [
@@ -28,7 +28,7 @@
       "Read",
       "Guarded Write"
     ],
-    "websiteURL": "https://sienna.work",
+    "websiteURL": "https://siennabot.ai",
     "defaultPrompt": [
       "Connect Instagram, X, or LinkedIn and safely prepare a social post.",
       "Analyze recent ad performance and explain the strongest creative patterns.",

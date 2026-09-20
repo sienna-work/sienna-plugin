@@ -9,11 +9,11 @@
       "name": "sienna",
       "source": "./plugins/sienna",
       "description": "Manage advertising accounts, metrics, creatives, public research, common Jobs, and guarded social publishing with Sienna.",
-      "version": "0.12.52",
+      "version": "0.12.53",
       "author": {
         "name": "Sienna"
       },
-      "homepage": "https://sienna.work",
+      "homepage": "https://siennabot.ai",
       "repository": "https://github.com/sienna-work/sienna-plugin",
       "license": "MIT",
       "category": "productivity",

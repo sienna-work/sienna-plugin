@@ -35,7 +35,7 @@ Cursor:
    `~/.cursor/plugins/local/sienna`, then reload Cursor.
 3. Connect the installed Sienna MCP server and approve Sienna OAuth.
 
-The Cursor package uses `https://mcp.sienna.work/mcp` and does not install a
+The Cursor package uses `https://mcp.siennabot.ai/mcp` and does not install a
 local runtime or contain API keys, access tokens, or OAuth client secrets.
 
 Use the installed Sienna Skill for supported commands, required confirmation,
@@ -44,7 +44,7 @@ support link below.
 
 ## Product and support
 
-- Product: https://sienna.work
+- Product: https://siennabot.ai
 - Support: https://github.com/sienna-work/sienna-plugin/issues
-- Privacy: https://auth.sienna.work/privacy
+- Privacy: https://auth.siennabot.ai/privacy
 - License: [MIT](LICENSE)

@@ -1,11 +1,11 @@
 {
   "name": "sienna",
-  "version": "0.12.52",
+  "version": "0.12.53",
   "description": "Analyze linked advertising accounts, metrics, creatives, and public market research with Sienna's hosted MCP tools.",
   "author": {
     "name": "Sienna"
   },
-  "homepage": "https://sienna.work",
+  "homepage": "https://siennabot.ai",
   "repository": "https://github.com/sienna-work/sienna-plugin",
   "license": "MIT",
   "keywords": [

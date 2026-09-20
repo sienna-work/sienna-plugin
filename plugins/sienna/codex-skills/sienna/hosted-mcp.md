@@ -6,7 +6,7 @@ UUID Job IDs.
 
 ## Connection and tools
 
-- URL: `https://mcp.sienna.work/mcp`
+- URL: `https://mcp.siennabot.ai/mcp`
 - Read permissions: `sienna.analytics.read`, `sienna.jobs.read`, and when needed
   `sienna.creative.read`
 - Lifecycle mutation permission: `sienna.jobs.write`

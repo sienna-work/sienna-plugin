@@ -6,7 +6,7 @@
 
 ## 연결과 도구
 
-- URL: `https://mcp.sienna.work/mcp`
+- URL: `https://mcp.siennabot.ai/mcp`
 - 읽기 권한: `sienna.analytics.read`, `sienna.jobs.read`, 필요한 경우
   `sienna.creative.read`
 - lifecycle 변경 권한: `sienna.jobs.write`

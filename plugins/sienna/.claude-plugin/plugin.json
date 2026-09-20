@@ -1,12 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "sienna",
-  "version": "0.12.52",
+  "version": "0.12.53",
   "description": "Manage advertising accounts, metrics, creatives, public research, common Jobs, and guarded social publishing with Sienna.",
   "author": {
     "name": "Sienna"
   },
-  "homepage": "https://sienna.work",
+  "homepage": "https://siennabot.ai",
   "repository": "https://github.com/sienna-work/sienna-plugin",
   "license": "MIT",
   "keywords": [

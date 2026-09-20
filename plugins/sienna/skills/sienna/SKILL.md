@@ -25,7 +25,7 @@ official checksum-verifying installer downloads a host executable and obtain
 explicit approval before running:
 
 ```sh
-curl -fsSL https://get.sienna.work/install.sh | bash
+curl -fsSL https://get.siennabot.ai/install.sh | bash
 ```
 
 Verify `"$SIENNA_BIN" --version`. This Skill requires Sienna 0.17.6 or newer.

@@ -22,7 +22,7 @@ If it is unavailable, explain that the official checksum-verifying installer
 downloads a local CLI and obtain explicit approval before running:
 
 ```sh
-curl -fsSL https://get.sienna.work/install.sh | bash
+curl -fsSL https://get.siennabot.ai/install.sh | bash
 ```
 
 This Skill requires Sienna 0.17.6 or newer. Obtain approval before updating an
