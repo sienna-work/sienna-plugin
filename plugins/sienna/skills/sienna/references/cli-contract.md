@@ -60,7 +60,7 @@ Job ID or infer one from provider data if the field is absent.
   is allowed but unnecessary. It cannot be combined with `--include-data`.
 - Research accepts repeated `market|brand|competitor` scopes. Omit scope for
   automatic selection. Depth is optional `quick|standard` and defaults to
-  `standard`; `deep` is unsupported.
+  `quick`; `deep` is unsupported.
 - Use `--detach` only when an immediate background acknowledgement is wanted.
   Otherwise CLI natural-language actions wait while preserving the same Job ID.
 

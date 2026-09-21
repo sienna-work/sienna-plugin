@@ -118,7 +118,7 @@ Use [references/workflows.md](references/workflows.md) for complete patterns.
   output; an explicit `--json` is allowed but unnecessary. `--data-only`
   conflicts with `--include-data`.
 - Research scope is optional and repeatable `market|brand|competitor`. Depth is
-  optional `quick|standard` and defaults to standard.
+  optional `quick|standard` and defaults to quick.
 - Creative list/show/search remain dedicated structured actions.
 
 Every CLI action returns a top-level `job_id` and an authenticated product

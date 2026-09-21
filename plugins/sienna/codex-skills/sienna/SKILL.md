@@ -97,7 +97,7 @@ Social connections use the same non-blocking pattern and public platform values
   conflicts with `--include-data`.
 - Research requires a prompt. Its optional repeated scope is
   `market|brand|competitor`; optional depth is `quick|standard` and defaults to
-  standard.
+  quick.
 - Creative remains dedicated `list|show|search`.
 
 Every CLI action returns a top-level `job_id` and an authenticated product
