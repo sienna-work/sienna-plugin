@@ -40,6 +40,12 @@ Hosted MCP에는 범용 `ask`, 범용 `read`, `job_continue`, `wait`, retry 도�
 다른 입력을 보내면 conflict다. Action은 즉시 같은 `job_id`의 acknowledgement를
 반환할 수 있으므로 결과가 없다고 실패로 판단하지 않는다.
 
+Hosted MCP 응답이나 `job_status` 조회는 사용자가 결과를 실제 확인했다는 뜻이 아니다.
+확인되지 않은 actionable·terminal 상태는 검증된 계정 이메일로 자동 안내되며 별도
+알림 opt-in은 없다. 외부 안내에는 일반 상태, opaque Job ID와 안전한 회수 안내만
+포함되고 prompt나 결과는 포함되지 않는다. 이메일은 끝난 agent turn을 자동으로
+재개하지 않으므로 사용자가 돌아오면 새 turn에서 `job_status`로 회수한다.
+
 Ads·Creative·Research 결과의 `data.web_url`은 사용자가 Sienna에서 실제 광고
 preview를 확인할 수 있는 인증된 경로다. 반환된 URL을 그대로 제시하고 같은 Sienna
 계정 로그인이 필요할 수 있음을 안내한다. Job ID나 provider field로 URL을 조립하거나

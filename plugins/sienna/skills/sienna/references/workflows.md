@@ -130,9 +130,10 @@ sienna ads metrics ask "최근 7일 Meta 성과를 상세히 조회해줘" \
 
 The foreground response carries a top-level `job_id` and canonical
 `ask-result-v1` under `data`; `--data-only` automatically selects JSON, while an
-explicit `--json` remains valid. Add `--detach` only for the standard immediate
-Job acknowledgement, then use `jobs status|wait`. Do not combine `--data-only`
-with `--include-data`.
+explicit `--json` remains valid. With Research `--detach`, wait through planning
+until the Job is running, needs input, or is terminal; then use `jobs
+status|wait` for a running Job. Do not combine `--data-only` with
+`--include-data`.
 
 Lifecycle mutations preview by default:
 

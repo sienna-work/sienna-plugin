@@ -61,8 +61,10 @@ Job ID or infer one from provider data if the field is absent.
 - Research accepts repeated `market|brand|competitor` scopes. Omit scope for
   automatic selection. Depth is optional `quick|standard` and defaults to
   `quick`; `deep` is unsupported.
-- Use `--detach` only when an immediate background acknowledgement is wanted.
-  Otherwise CLI natural-language actions wait while preserving the same Job ID.
+- Research `--detach` waits through `queued|planning` and returns only at
+  `running`, `needs_input`, or a terminal state. At `running`, preserve the Job
+  ID and `jobs status|wait` recovery; at `needs_input`, present the question and
+  choices. Otherwise CLI natural-language actions wait with the same Job ID.
 
 ## Common Job lifecycle
 
@@ -86,6 +88,11 @@ sienna jobs purge <JOB_ID> --execute --json
 
 - `jobs wait` honors `poll_after_ms`. Ctrl-C stops local waiting and does not
   cancel the Job.
+- Actionable and terminal notifications are automatic; there is no `--notify`
+  option. If standalone or detached CLI output is not visibly received, the
+  fallback is the verified account email. External notices contain only general
+  status, the opaque Job ID, and safe recovery instructions. They do not resume
+  a finished agent turn.
 - Status exposes only general `preparing|retrieving|finalizing` progress, target
   states, `needs_input`, and terminal results. Do not infer hidden steps.
 - Target execution is non-terminal `pending|running`, then terminal

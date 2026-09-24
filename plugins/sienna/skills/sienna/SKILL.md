@@ -126,7 +126,10 @@ Every CLI action returns a top-level `job_id` and an authenticated product
 the clickable way to view available ad previews in Sienna; the user may need to
 sign in with the same Sienna account. Never reconstruct a URL from a Job ID or
 guess one from provider fields when `web_url` is absent. Natural-language CLI
-actions wait by default; `--detach` returns the acknowledgement. A structured
+actions wait by default. For Research, `--detach` still waits through planning:
+it returns only when the Job is `running`, needs user input, or has reached a
+terminal state. If input is needed, present the exact question and choices; if
+it is running, preserve the Job ID and `jobs status|wait` recovery. A structured
 action may finish inline or continue under the same Job ID.
 
 ## Track competitor Watchlists
@@ -173,6 +176,14 @@ Jobs from UI, CLI, and MCP share this lifecycle. Status exposes general
 Do not narrate every poll or progress stage. If an acknowledgement is useful,
 send one short sentence, then respond again for `needs_input`, a material error,
 or the terminal result.
+Actionable and terminal Job notifications are automatic; do not look for or
+invent a `--notify` option. When standalone or detached CLI output is not
+visibly received, Sienna falls back to the verified account email. An active
+product UI shows progress and the result in the app; if it is closed before the
+result is visibly received, Sienna tries desktop push and then account email.
+External notices contain only a general status, opaque Job ID, and safe recovery
+instructions—not the prompt or result. A notice does not resume a finished
+agent turn; retrieve the Job in a new turn when the user returns.
 Preserve successful results when another platform or research scope fails, and
 present terminal `partial` results with their target errors and warnings. There
 is no in-place execution continuation. For a new question that should retain a

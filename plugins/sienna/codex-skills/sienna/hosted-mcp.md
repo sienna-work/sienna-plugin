@@ -41,6 +41,14 @@ key when retransmitting the same request after a timeout. Reusing it with
 different input is a conflict. An action may return only a Job acknowledgement;
 poll that Job instead of starting another action.
 
+An MCP response or `job_status` poll is not proof that a person saw an
+actionable or terminal result. If it is not visibly received, Sienna
+automatically falls back to the verified account email; there is no per-Job
+notification opt-in. External notices contain only general status, the opaque
+Job ID, and safe recovery instructions—not the prompt or result. Email does not
+resume a finished agent turn; retrieve the Job with `job_status` in a new turn
+when the user returns.
+
 Ads, Creative, and Research results also return `data.web_url`; present that
 value unchanged as the authenticated Sienna page for available ad previews and
 note that the same Sienna account may need to sign in. Do not reconstruct it
